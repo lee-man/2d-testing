@@ -9,9 +9,9 @@ num_exp = 0
 mlb = MultiLabelBinarizer()
 with open('data/LOG.csv', encoding='utf-8') as f:
     f_csv = csv.reader(f)
-    mlb.fit_transform()
+    print(mlb.fit_transform(f_csv)[2])
 
-mlb.classes_
+print(mlb.classes_[1])
 exit()
 
 
