@@ -1,8 +1,18 @@
 import csv
+from sklearn.preprocessing import MultiLabelBinarizer
 
 total_num_sc = 0
 max_id = 0
 num_exp = 0
+
+# Multi-Label Binarizer
+mlb = MultiLabelBinarizer()
+with open('data/LOG.csv', encoding='utf-8') as f:
+    f_csv = csv.reader(f)
+    mlb.fit_transform()
+
+mlb.classes_
+exit()
 
 
 # Statistics
