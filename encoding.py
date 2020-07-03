@@ -5,13 +5,28 @@ total_num_sc = 0
 max_id = 0
 num_exp = 0
 
+# 1. get the unique id list
+print('Get the unique id list')
+id_list = []
+with open('data/LOG.csv', encoding='utf-8') as f:
+    f_csv = csv.reader(f)
+    
+    for row in f_csv:
+        for element in row:
+            if element not in id_list and element != '' and element != '\ufeff326':
+                id_list.append(int(element))
+id_list = sorted(id_list)
+print('The length of id list is {}'.format(len(id_list)))
+print('The Min and Max of id list are {} and {}.'.format(min(id_list), max(id_list)))
+exit()
+
 # Multi-Label Binarizer
 mlb = MultiLabelBinarizer()
 with open('data/LOG.csv', encoding='utf-8') as f:
     f_csv = csv.reader(f)
-    print(mlb.fit_transform(f_csv)[2])
+    mlb.fit_transform(f_csv)
 
-print(mlb.classes_[1])
+print(mlb.classes_)
 exit()
 
 
