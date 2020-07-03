@@ -52,7 +52,40 @@ print('The # and percentage of activated scan chains are {:.2f} and {:.2f}%.'.fo
 
 
 # Encoding
+# Toy Examples
+num_training = 10000
+len_sc = 100
+group_ctrl = 10
+chain_ctrl = 10
+state_sc = [0., 1.]
+prob_sc = [0.8, 0.2]
+constraint = 0.5
+encoded_efficiency = 0
+encoded_success = 0 
 
+samples = np.random.choice(state_sc, size=(num_training, len_sc), p=prob_sc)
+encoded_samples_group = np.zeros((num_training, group_ctrl))
+encoded_samples_chain = np.zeros((num_training, chain_ctrl))
+
+# Specify the control bits of each test cube
+for (id, sample) in enumerate(samples):
+    for (ele_id, ele) in enumerate(sample):
+        if ele == 1.0:
+            encoded_samples_group[id, ele_id % group_ctrl] = 1
+            encoded_samples_chain[id, ele_id // chain_ctrl] = 1
+
+# Caculate the encoding efficiency
+for id in range(num_training): 
+    activated = encoded_samples_group[id, :].sum() \
+               * encoded_samples_chain[id, :].sum()
+    if (activated / len_sc) <= constraint:
+        encoded_success += 1
+    encoded_efficiency += activated
+
+efficiency = encoded_efficiency / (num_training * len_sc)
+success = encoded_success / num_training 
+print('Encoding Efficiency is {:.2f}%.'.format(100.*efficiency))
+print('Encoding success rate is {:.2f}%.'.format(100.*success))
 
 
 
