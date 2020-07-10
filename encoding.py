@@ -1,4 +1,5 @@
 import csv
+import math
 from sklearn.preprocessing import MultiLabelBinarizer
 import numpy as np
 
@@ -70,7 +71,7 @@ def group_bit_determine(row):
     encoded_group_ctrl = np.zeros(group_ctrl)
     for (id, ele) in enumerate(row):
         if ele == 1:
-            encoded_group_ctrl[id // group_ctrl] = 1
+            encoded_group_ctrl[id % group_ctrl] = 1
     return encoded_group_ctrl
 
 def calculate_group_overlap(row1, row2):
@@ -96,11 +97,10 @@ stop_flag = False
 
 print('Start merging')
 # Simplify the dataset
-mlb = mlb[:10]
+# mlb = mlb[:150]
 merged_cube = mlb[0]
 mlb = np.delete(mlb, 0, 0)
-while mlb.shape[0] > 1:
-    print(mlb.shape[0])
+while mlb.shape[0] >= 1:
     overlap = np.zeros(mlb.shape[0])
     for (id, row) in enumerate(mlb):
         if conflict_check(merged_cube, row):
@@ -124,17 +124,20 @@ print(merged_array.shape)
 
 # 4. Encoding        
 # Specify the control bits of each test cube
+num_activated = 0
 encoded_efficiency = 0
 encoded_success = 0
 num_exp = merged_array.shape[0]
+print(num_exp)
 constraint = 0.5
 encoded_samples_group = np.zeros((num_exp, group_ctrl))
 encoded_samples_chain = np.zeros((num_exp, chain_ctrl))
 for (id, sample) in enumerate(merged_array):
     for (ele_id, ele) in enumerate(sample):
         if ele == 1.0:
-            encoded_samples_group[id, ele_id // group_ctrl] = 1
-            encoded_samples_chain[id, ele_id % chain_ctrl] = 1
+            num_activated += 1
+            encoded_samples_group[id, ele_id % group_ctrl] = 1
+            encoded_samples_chain[id, ele_id // group_ctrl] = 1
 
 # Caculate the encoding efficiency
 for id in range(num_exp): 
@@ -144,8 +147,10 @@ for id in range(num_exp):
         encoded_success += 1
     encoded_efficiency += activated
 
+activated = num_activated / (num_exp * num_id)
 efficiency = encoded_efficiency / (num_exp * num_id)
 success = encoded_success / num_exp 
+print('Activated percentage after merging is {:.2f}%.'.format(100.*activated))
 print('Encoding Efficiency is {:.2f}%.'.format(100.*efficiency))
 print('Encoding success rate is {:.2f}%.'.format(100.*success))
 
