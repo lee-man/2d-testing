@@ -95,9 +95,12 @@ merged_array = []
 stop_flag = False
 
 print('Start merging')
+# Simplify the dataset
+mlb = mlb[:10]
 merged_cube = mlb[0]
 mlb = np.delete(mlb, 0, 0)
 while mlb.shape[0] > 1:
+    print(mlb.shape[0])
     overlap = np.zeros(mlb.shape[0])
     for (id, row) in enumerate(mlb):
         if conflict_check(merged_cube, row):
@@ -106,20 +109,47 @@ while mlb.shape[0] > 1:
         # all conflicted
         merged_array.append(merged_cube)
         merged_cube = mlb[0]
-        np.delete(mlb, 0, 0)
+        mlb = np.delete(mlb, 0, 0)
         continue
     id_max = np.argmax(overlap)
     merged_cube = merge_two_cube(merged_cube, mlb[id_max])
-    np.delete(mlb, id_max, 0)
+    mlb = np.delete(mlb, id_max, 0)
     if calculate_activated_percentage(merged_cube) > merge_upper:
         merged_array.append(merged_cube)
         merged_cube = mlb[0]
-        np.delete(mlb, 0, 0)
+        mlb = np.delete(mlb, 0, 0)
 
 merged_array = np.array(merged_array)
 print(merged_array.shape)
-        
-    
+
+# 4. Encoding        
+# Specify the control bits of each test cube
+encoded_efficiency = 0
+encoded_success = 0
+num_exp = merged_array.shape[0]
+constraint = 0.5
+encoded_samples_group = np.zeros((num_exp, group_ctrl))
+encoded_samples_chain = np.zeros((num_exp, chain_ctrl))
+for (id, sample) in enumerate(merged_array):
+    for (ele_id, ele) in enumerate(sample):
+        if ele == 1.0:
+            encoded_samples_group[id, ele_id // group_ctrl] = 1
+            encoded_samples_chain[id, ele_id % chain_ctrl] = 1
+
+# Caculate the encoding efficiency
+for id in range(num_exp): 
+    activated = encoded_samples_group[id, :].sum() \
+               * encoded_samples_chain[id, :].sum()
+    if (activated / num_id) <= constraint:
+        encoded_success += 1
+    encoded_efficiency += activated
+
+efficiency = encoded_efficiency / (num_exp * num_id)
+success = encoded_success / num_exp 
+print('Encoding Efficiency is {:.2f}%.'.format(100.*efficiency))
+print('Encoding success rate is {:.2f}%.'.format(100.*success))
+
+   
 
 
 
