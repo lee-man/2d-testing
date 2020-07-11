@@ -93,11 +93,10 @@ def calculate_activated_percentage(row):
 # Start merging the test cube
 print('Create merged array')
 merged_array = []
-stop_flag = False
 
 print('Start merging')
 # Simplify the dataset
-# mlb = mlb[:150]
+mlb = mlb[:10000]
 merged_cube = mlb[0]
 mlb = np.delete(mlb, 0, 0)
 while mlb.shape[0] >= 1:
