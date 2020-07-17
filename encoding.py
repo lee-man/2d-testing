@@ -96,7 +96,7 @@ merged_array = []
 
 print('Start merging')
 # Simplify the dataset
-mlb = mlb[:10000]
+mlb = mlb[:1000]
 merged_cube = mlb[0]
 mlb = np.delete(mlb, 0, 0)
 while mlb.shape[0] >= 1:
