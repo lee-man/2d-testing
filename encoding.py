@@ -3,6 +3,12 @@ import random
 import math
 from sklearn.preprocessing import MultiLabelBinarizer
 import numpy as np
+import copy
+
+from sklearn import metrics
+import matplotlib.pyplot as plt
+plt.switch_backend('agg')
+
 
 num_sc = 0
 num_exp = 0
@@ -54,21 +60,6 @@ print('The # and percentage of activated scan chains are {:.2f} and {:.2f}%.'.fo
         100. * num_sc / (num_exp * num_id)))
 
 
-# 3. Merging test cubes
-print('*' * 15)
-print('Merging test cubes')
-group_ctrl = 19
-chain_ctrl = 18
-mux_ctrl = 3
-print('Control bits settings:{} chain ctrl and {} group ctrl'.format(chain_ctrl, group_ctrl))
-merge_upper = 0.2
-print('The upper bound of activated scan chain after merging percentage is {}'.format(merge_upper))
-activated_upper = 0.5
-print('The upper bound of activated scan chain for low power encoding is {}'.format(activated_upper))
-
-def chunk(l, n):
-    '''
-    '''
 
 class TwoDimEncoding(object):
     '''
@@ -84,6 +75,11 @@ class TwoDimEncoding(object):
         self.mux_ctrl = int(math.pow(2, mux_ctrl))
         self.upper_bound = upper_bound
         self.group_mapping = []
+        self.merged_array = None
+        self.num_merged_cube = None
+        self.encoded_group = None
+        self.encoded_chain = None
+        self.encoded_mux = None
         self._print_info()
         
     
@@ -105,120 +101,130 @@ class TwoDimEncoding(object):
             self.group_mapping[j] = {str(id): i for i, id in enumerate(id_list)}
             
     def check_conflict(self, cube1, cube2):
-        # Check whether two cubes have a confliction
+        '''
+        Check whether two cubes have a confliction
+        '''
         return (cube1 * cube2).sum() == 0
     
     def determin_group_bit(self, cube, mux_id):
-        # Determine the group control bits for a specific row
+        '''
+        Determine the group control bits for a specific row
+        '''
         if not mux_id < self.mux_ctrl:
             raise VauleError('The MUX id is beyond the range')
         for (id, ele) in enumerate(row):
             if ele == 1:
                 encoded_group_ctrl[group_mapping[mux_id][str(id)] % group_ctrl] = 1
-
         return encoded_group_ctrl
 
     def calculate_group_overlap(self, cube1, cube2, mux_id):
-        # Cacalate the overlap percentage of grouping control bits
+        '''
+        Cacalate the overlap percentage of grouping control bits
+        '''
         ctrl1 = self.determin_group_bit(cube1, mux_id)
         ctrl2 = self.determin_group_bit(cube1, mux_id)
         return (ctrl1 * ctrl2).sum() / (ctrl1 + ctrl2 - ctrl1 * ctrl2).sum() 
 
-        
-
-        
-
-
-def check_conflict(row1, row2):
-    return (row1 * row2).sum() == 0
-
-def determin_group_bit(row):
-    # Determine the group control bits for a specific row
-    encoded_group_ctrl = np.zeros(group_ctrl)
-    for (id, ele) in enumerate(row):
-        if ele == 1:
-            encoded_group_ctrl[id % group_ctrl] = 1
-    return encoded_group_ctrl
-
-def calculate_group_overlap(row1, row2):
-    # Cacalate the overlap percentage of grouping control bits
-    ctrl1 = determin_group_bit(row1)
-    ctrl2 = determin_group_bit(row2)
-    return (ctrl1 * ctrl2).sum() / (ctrl1 + ctrl2 - ctrl1 * ctrl2).sum() 
- 
-def merge_two_cube(row1, row2):
-    # Merge two testing cube
-    for i in range(row1.shape[0]):
-        if row2[i] == 1:
-            row1[i] = 1
-    return row1
-
-def calculate_activated_percentage(row):
-    return row.sum()/row.shape[0]
+    def merge_two_cube(self, cube1, cube2):
+        '''
+        Merge two testing cube.
+        '''
+        for i in range(row1.shape[0]):
+            if row2[i] == 1:
+                row1[i] = 1
+        return row1
     
-# Start merging the test cube
-print('Create merged array')
-merged_array = []
+    def calculate_activated_percentage(self, cube):
+        return cube.sum()/row.shape[0]
 
-print('Start merging')
-# Simplify the dataset
-mlb = mlb[:1000]
-merged_cube = mlb[0]
-mlb = np.delete(mlb, 0, 0)
-while mlb.shape[0] >= 1:
-    overlap = np.zeros(mlb.shape[0])
-    for (id, row) in enumerate(mlb):
-        if check_conflict(merged_cube, row):
-            overlap[id] = calculate_group_overlap(row, merged_cube)
-    if overlap.sum() == 0:
-        # all conflicted
-        merged_array.append(merged_cube)
+    def merging(self):
+        print('*' * 15)
+        print('Start Merging.')
+        mlb = copy.deepcopy(self.mlb)
+        merged_array = []
+        # picked_cube = []
         merged_cube = mlb[0]
+        
         mlb = np.delete(mlb, 0, 0)
-        continue
-    id_max = np.argmax(overlap)
-    merged_cube = merge_two_cube(merged_cube, mlb[id_max])
-    mlb = np.delete(mlb, id_max, 0)
-    if calculate_activated_percentage(merged_cube) > merge_upper:
-        merged_array.append(merged_cube)
-        merged_cube = mlb[0]
-        mlb = np.delete(mlb, 0, 0)
+        while mlb.shape[0] >= 1:
+            for (id, row) in enumerate(mlb):
+                if self.check_conflict(merged_cube, row):
+                    merged_cube = self.merge_two_cube(merged_cube, mlb[id])
+                    # picked_cube.append(mlb[id])
+                    mlb = np.delete(mlb, id, 0)
+                    if self.calculate_activated_percentage(merged_cube) > self.upper_bound:
+                        merged_array.append(merged_cube)
+                        merged_cube = mlb[0]
+                        # picked_cube = []
+                        mlb = np.delete(mlb, 0, 0)
+                        continue
+            merged_array.append(merged_cube)
+            merged_cube = mlb[0]
+            # picked_cube = []
+            mlb = np.delete(mlb, 0, 0)
+        
+        self.merged_array = np.array(merged_array)
 
-merged_array = np.array(merged_array)
-print(merged_array.shape)
+    def encoding(self):
+        print('*' * 15)
+        print('Start Encoding.')
+        self.num_merged_cube = self.merged_array.shape[0]
+        self.encoded_group = np.zeros((self.num_merged_cube, self.group_ctrl))
+        self.encoded_chain = np.zeros((self.num_merged_cube, self.chain_ctrl))
+        self.encoded_mux = np.zeros(self.num_merged_cube)
+        for (id, sample) in enumerate(merged_array):
+            group_bit = np.zeros((self.mux_ctrl, self.group_ctrl))
+            chain_bit = np.zeros((self.mux_ctrl, self.chain_ctrl))
+            for mux_bit in range(self.mux_ctrl):
+                for (ele_id, ele) in enumerate(sample):
+                    if ele == 1.0:
+                        group_bit[mux_bit, self.group_mapping[str(ele_id)] % group_ctrl] = 1
+                        chain_bit[mux_bit, self.group_mapping[str(ele_id)] // group_ctrl] = 1
+            self.encoded_mux = np.argmin(group_bit.sum(axis=1) * chain_bit(axis=1))
 
-# 4. Encoding        
-# Specify the control bits of each test cube
-num_activated = 0
-encoded_efficiency = 0
-encoded_success = 0
-num_exp = merged_array.shape[0]
-print(num_exp)
-constraint = 0.5
-encoded_samples_group = np.zeros((num_exp, group_ctrl))
-encoded_samples_chain = np.zeros((num_exp, chain_ctrl))
-for (id, sample) in enumerate(merged_array):
-    for (ele_id, ele) in enumerate(sample):
-        if ele == 1.0:
-            num_activated += 1
-            encoded_samples_group[id, ele_id % group_ctrl] = 1
-            encoded_samples_chain[id, ele_id // group_ctrl] = 1
+    def eval(self):
+        print('*' * 15)
+        print('Evalutation.')
+        specified_num = []
+        activated_num = []
+        encoded_efficiency = 0
+        encoded_success = 0
+        constrain = 0.5
+        self.num_merged_cube = self.merged_array.shape[0]
+        print('Total number of merged test cube is {}'.format(num_merged_cube))
+        for id in range(num_merged_cube):
+            specified_num[id] = self.merged_array[id].sum()
+            activated_num[id] = = self.encoded_group[id].sum() \
+                            * self.encoded_chain[id].sum()
+            if (activated / self.num_id) <= constraint:
+                encoded_success += 1
+        specified_num = np.array(specified_num)
+        activated_num = np.array(activated_num)
+        
+        plt.figure()
+        sns.distplot(specified_num, hist_kws={'range': ranges}, kde=False, bins=50, norm_hist=True, label='Specified')
+        sns.distplot(activated_nums, hist_kws={'range': ranges}, kde=False, bins=50, norm_hist=True, label='Activated')
+        plt.xlabel(args.process + ' # Scan Chain')
+        plt.ylabel('Density')
+        plt.legend()
 
-# Caculate the encoding efficiency
-for id in range(num_exp): 
-    activated = encoded_samples_group[id, :].sum() \
-               * encoded_samples_chain[id, :].sum()
-    if (activated / num_id) <= constraint:
-        encoded_success += 1
-    encoded_efficiency += activated
+        if not os.path.isdir('figs/'):
+                os.makedirs(os.path.dirname('figs'))
+        plt.savefig('figs/hist.png')
 
-activated = num_activated / (num_exp * num_id)
-efficiency = encoded_efficiency / (num_exp * num_id)
-success = encoded_success / num_exp 
-print('Activated percentage after merging is {:.2f}%.'.format(100.*activated))
-print('Encoding Efficiency is {:.2f}%.'.format(100.*efficiency))
-print('Encoding success rate is {:.2f}%.'.format(100.*success))
+        specified_percentage = specified_num.sum() / (self.num_merged_cube * self.num_id)
+        activated_percentage = activated_num.sum() / (self.num_merged_cube * self.num_id)
+        succeeded =  encoded_success / self.num_merged_cube
+        print('Specified scan chain percentage after merging is {:.2f}%.'.format(100.*specified_percentage))
+        print('Activaed scan chain percentages is {:.2f}%.'.format(100.*activated_percentage))
+        print('Encoding success rate is {:.2f}%.'.format(100.*succeeded))
 
+
+        
+encoder = TwoDimEncoding(mlb)
+encoder.merging()
+encoder.encoding()
+encoder.eval()
    
 
 
