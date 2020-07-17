@@ -1,4 +1,5 @@
 import csv
+import random
 import math
 from sklearn.preprocessing import MultiLabelBinarizer
 import numpy as np
@@ -58,15 +59,80 @@ print('*' * 15)
 print('Merging test cubes')
 group_ctrl = 19
 chain_ctrl = 18
+mux_ctrl = 3
 print('Control bits settings:{} chain ctrl and {} group ctrl'.format(chain_ctrl, group_ctrl))
 merge_upper = 0.2
-print('The upper bound of activated scan chain percentage is {}'.format(merge_upper))
+print('The upper bound of activated scan chain after merging percentage is {}'.format(merge_upper))
+activated_upper = 0.5
+print('The upper bound of activated scan chain for low power encoding is {}'.format(activated_upper))
+
+def chunk(l, n):
+    '''
+    '''
+
+class TwoDimEncoding(object):
+    '''
+    The class for Two-Dimention Low-Power Encoding.
+
+    '''
+    def __init__(self, mlb, group_ctrl=19, chain_ctrl=18, mux_ctrl=3, upper_bound=0.5):
+        self.mlb = mlb
+        self.num_cube = mlb.shape[0]
+        self.num_id = mlb.shape[1]
+        self.group_ctrl = group_ctrl
+        self.chain_ctrl = chain_ctrl
+        self.mux_ctrl = int(math.pow(2, mux_ctrl))
+        self.upper_bound = upper_bound
+        self.group_mapping = []
+        self._print_info()
+        
+    
+    def _print_info(self):
+        print('*' * 5, 'Statistic', '*' * 5)
+        print('The size of testing dataset is {}'.format(self.num_cube))
+        print('The size of each test cube is {}'.format(self.num_id))
+        print('Control bits settings:{} chain ctrl, {} group ctrl and mux crtl'.format(self.chain_ctrl, self.group_ctrl, self.mux_ctrl))
+        print('The upper bound of activated scan chian for low power encoding is {}.'format(self.upper_bound))
+
+    def generate_group_mapping(self):
+        '''
+        Group Mapping: map the scan chain id to the underlying line.
+        '''
+        id_list = np.arange(self.num_id))
+        self.group_mapping[0] = {str(id): id for id in range(self.num_id)}
+        for j in range(1, self.mux_ctrl):
+            np.random.shuffle(id_list)
+            self.group_mapping[j] = {str(id): i for i, id in enumerate(id_list)}
+            
+    def check_conflict(self, cube1, cube2):
+        # Check whether two cubes have a confliction
+        return (cube1 * cube2).sum() == 0
+    
+    def determin_group_bit(self, cube, mux_id):
+        # Determine the group control bits for a specific row
+        if not mux_id < self.mux_ctrl:
+            raise VauleError('The MUX id is beyond the range')
+        for (id, ele) in enumerate(row):
+            if ele == 1:
+                encoded_group_ctrl[group_mapping[mux_id][str(id)] % group_ctrl] = 1
+
+        return encoded_group_ctrl
+
+    def calculate_group_overlap(self, cube1, cube2, mux_id):
+        # Cacalate the overlap percentage of grouping control bits
+        ctrl1 = self.determin_group_bit(cube1, mux_id)
+        ctrl2 = self.determin_group_bit(cube1, mux_id)
+        return (ctrl1 * ctrl2).sum() / (ctrl1 + ctrl2 - ctrl1 * ctrl2).sum() 
+
+        
+
+        
 
 
-def conflict_check(row1, row2):
+def check_conflict(row1, row2):
     return (row1 * row2).sum() == 0
 
-def group_bit_determine(row):
+def determin_group_bit(row):
     # Determine the group control bits for a specific row
     encoded_group_ctrl = np.zeros(group_ctrl)
     for (id, ele) in enumerate(row):
@@ -76,8 +142,8 @@ def group_bit_determine(row):
 
 def calculate_group_overlap(row1, row2):
     # Cacalate the overlap percentage of grouping control bits
-    ctrl1 = group_bit_determine(row1)
-    ctrl2 = group_bit_determine(row2)
+    ctrl1 = determin_group_bit(row1)
+    ctrl2 = determin_group_bit(row2)
     return (ctrl1 * ctrl2).sum() / (ctrl1 + ctrl2 - ctrl1 * ctrl2).sum() 
  
 def merge_two_cube(row1, row2):
@@ -102,7 +168,7 @@ mlb = np.delete(mlb, 0, 0)
 while mlb.shape[0] >= 1:
     overlap = np.zeros(mlb.shape[0])
     for (id, row) in enumerate(mlb):
-        if conflict_check(merged_cube, row):
+        if check_conflict(merged_cube, row):
             overlap[id] = calculate_group_overlap(row, merged_cube)
     if overlap.sum() == 0:
         # all conflicted
