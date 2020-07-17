@@ -9,6 +9,9 @@ from sklearn import metrics
 import matplotlib.pyplot as plt
 plt.switch_backend('agg')
 
+import seaborn as sns
+
+
 
 num_sc = 0
 num_exp = 0
@@ -180,7 +183,7 @@ class TwoDimEncoding(object):
         self.encoded_group = np.zeros((self.num_merged_cube, self.group_ctrl))
         self.encoded_chain = np.zeros((self.num_merged_cube, self.chain_ctrl))
         self.encoded_mux = np.zeros(self.num_merged_cube)
-        for (id, sample) in enumerate(merged_array):
+        for (id, sample) in enumerate(self.merged_array):
             group_bit = np.zeros((self.mux_ctrl, self.group_ctrl))
             chain_bit = np.zeros((self.mux_ctrl, self.chain_ctrl))
             for mux_bit in range(self.mux_ctrl):
@@ -193,25 +196,26 @@ class TwoDimEncoding(object):
     def eval(self):
         print('*' * 15)
         print('Evalutation.')
-        specified_num = []
-        activated_num = []
+        specified_num = np.zeros(self.num_merged_cube)
+        activated_num = np.zeros(self.num_merged_cube)
         encoded_efficiency = 0
         encoded_success = 0
         constrain = 0.5
         self.num_merged_cube = self.merged_array.shape[0]
-        print('Total number of merged test cube is {}'.format(num_merged_cube))
-        for id in range(num_merged_cube):
+        print('Total number of merged test cube is {}'.format(self.num_merged_cube))
+        for id in range(self.num_merged_cube):
             specified_num[id] = self.merged_array[id].sum()
             activated_num[id] = self.encoded_group[id].sum() \
                             * self.encoded_chain[id].sum()
             if (activated / self.num_id) <= constraint:
                 encoded_success += 1
-        specified_num = np.array(specified_num)
-        activated_num = np.array(activated_num)
+        print(specified_num)
+        print(activated_num)
+        ranges = (np.min(specified_num), np.max(activated_num))
         
         plt.figure()
         sns.distplot(specified_num, hist_kws={'range': ranges}, kde=False, bins=50, norm_hist=True, label='Specified')
-        sns.distplot(activated_nums, hist_kws={'range': ranges}, kde=False, bins=50, norm_hist=True, label='Activated')
+        sns.distplot(activated_num, hist_kws={'range': ranges}, kde=False, bins=50, norm_hist=True, label='Activated')
         plt.xlabel(args.process + ' # Scan Chain')
         plt.ylabel('Density')
         plt.legend()
