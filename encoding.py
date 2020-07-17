@@ -151,6 +151,10 @@ class TwoDimEncoding(object):
         # while mask.sum() != mlb.shape[0]:
         while idx_now == (mlb.shape[0] - 1):
             for (id, row) in enumerate(mlb):
+                if id == (mlb.shape[0] - 1):
+                    merged_array.append(merged_cube)
+                    idx_now += 1
+                    merged_cube = mlb[idx_now]
                 if mask[id] == 1:
                     continue
                 if self.check_conflict(merged_cube, row):
@@ -165,12 +169,8 @@ class TwoDimEncoding(object):
                         merged_cube = mlb[idx_now]
                         # picked_cube = []
                         # mlb = np.delete(mlb, 0, 0)
-                        continue
-            merged_array.append(merged_cube)
-            merged_cube = mlb[0]
-            # picked_cube = []
-            mlb = np.delete(mlb, 0, 0)
-        
+                        break
+                    
         self.merged_array = np.array(merged_array)
 
     def encoding(self):
