@@ -1,4 +1,5 @@
 import csv
+import os
 import random
 import math
 from sklearn.preprocessing import MultiLabelBinarizer
@@ -77,13 +78,14 @@ class TwoDimEncoding(object):
         self.chain_ctrl = chain_ctrl
         self.mux_ctrl = int(math.pow(2, mux_ctrl))
         self.upper_bound = upper_bound
-        self.group_mapping = []
+        self.group_mapping = {}
         self.merged_array = None
         self.num_merged_cube = None
         self.encoded_group = None
         self.encoded_chain = None
         self.encoded_mux = None
         self._print_info()
+        self.generate_group_mapping()
         
     
     def _print_info(self):
@@ -148,16 +150,18 @@ class TwoDimEncoding(object):
         idx_now = 0
         merged_array = []
         # picked_cube = []
-        merged_cube = mlb[idx_now]
+        merged_cube = copy.deepcopy(mlb[idx_now])
         # mlb = np.delete(mlb, 0, 0)
         # while mlb.shape[0] >= 1:
         # while mask.sum() != mlb.shape[0]:
-        while idx_now == (mlb.shape[0] - 1):
+        while idx_now < (mlb.shape[0] - 1):
             for (id, row) in enumerate(mlb):
                 if id == (mlb.shape[0] - 1):
                     merged_array.append(merged_cube)
-                    idx_now += 1
-                    merged_cube = mlb[idx_now]
+                    while mask[idx_now] == 1 and idx_now < (mlb.shape[0] - 1):
+                        idx_now += 1
+                    mask[idx_now] = 1
+                    merged_cube = copy.deepcopy(mlb[idx_now])
                 if mask[id] == 1:
                     continue
                 if self.check_conflict(merged_cube, row):
@@ -167,9 +171,12 @@ class TwoDimEncoding(object):
                     # mlb = np.delete(mlb, id, 0)
                     if self.calculate_activated_percentage(merged_cube) > self.upper_bound:
                         merged_array.append(merged_cube)
-                        idx_now += 1
+                        print('Out of range')
+                        # print(merged_array)
+                        while mask[idx_now] == 1 and idx_now < (mlb.shape[0] - 1):
+                            idx_now += 1
                         mask[idx_now] = 1
-                        merged_cube = mlb[idx_now]
+                        merged_cube = copy.deepcopy(mlb[idx_now])
                         # picked_cube = []
                         # mlb = np.delete(mlb, 0, 0)
                         break
@@ -189,9 +196,11 @@ class TwoDimEncoding(object):
             for mux_bit in range(self.mux_ctrl):
                 for (ele_id, ele) in enumerate(sample):
                     if ele == 1.0:
-                        group_bit[mux_bit, self.group_mapping[str(ele_id)] % group_ctrl] = 1
-                        chain_bit[mux_bit, self.group_mapping[str(ele_id)] // group_ctrl] = 1
-            self.encoded_mux = np.argmin(group_bit.sum(axis=1) * chain_bit(axis=1))
+                        group_bit[mux_bit, self.group_mapping[mux_bit][str(ele_id)] % self.group_ctrl] = 1
+                        chain_bit[mux_bit, self.group_mapping[mux_bit][str(ele_id)] // self.group_ctrl] = 1
+            self.encoded_mux = np.argmin(group_bit.sum(axis=1) * chain_bit.sum(axis=1))
+            self.encoded_group[id] = group_bit[self.encoded_mux]
+            self.encoded_chain[id] = chain_bit[self.encoded_mux]
 
     def eval(self):
         print('*' * 15)
@@ -200,28 +209,26 @@ class TwoDimEncoding(object):
         activated_num = np.zeros(self.num_merged_cube)
         encoded_efficiency = 0
         encoded_success = 0
-        constrain = 0.5
+        constraint = 0.5
         self.num_merged_cube = self.merged_array.shape[0]
         print('Total number of merged test cube is {}'.format(self.num_merged_cube))
         for id in range(self.num_merged_cube):
             specified_num[id] = self.merged_array[id].sum()
             activated_num[id] = self.encoded_group[id].sum() \
                             * self.encoded_chain[id].sum()
-            if (activated / self.num_id) <= constraint:
+            if (activated_num[id] / self.num_id) <= constraint:
                 encoded_success += 1
-        print(specified_num)
-        print(activated_num)
         ranges = (np.min(specified_num), np.max(activated_num))
         
         plt.figure()
         sns.distplot(specified_num, hist_kws={'range': ranges}, kde=False, bins=50, norm_hist=True, label='Specified')
         sns.distplot(activated_num, hist_kws={'range': ranges}, kde=False, bins=50, norm_hist=True, label='Activated')
-        plt.xlabel(args.process + ' # Scan Chain')
+        plt.xlabel(' # Scan Chain')
         plt.ylabel('Density')
         plt.legend()
 
         if not os.path.isdir('figs/'):
-                os.makedirs(os.path.dirname('figs'))
+                os.makedirs(os.path.dirname('figs/'))
         plt.savefig('figs/hist.png')
 
         specified_percentage = specified_num.sum() / (self.num_merged_cube * self.num_id)
