@@ -88,13 +88,13 @@ class TwoDimEncoding(object):
         print('The size of testing dataset is {}'.format(self.num_cube))
         print('The size of each test cube is {}'.format(self.num_id))
         print('Control bits settings:{} chain ctrl, {} group ctrl and mux crtl'.format(self.chain_ctrl, self.group_ctrl, self.mux_ctrl))
-        print('The upper bound of activated scan chian for low power encoding is {}.'format(self.upper_bound))
+        print('The upper bound of activated scan chian for low power encoding is {}.'.format(self.upper_bound))
 
     def generate_group_mapping(self):
         '''
         Group Mapping: map the scan chain id to the underlying line.
         '''
-        id_list = np.arange(self.num_id))
+        id_list = np.arange(self.num_id)
         self.group_mapping[0] = {str(id): id for id in range(self.num_id)}
         for j in range(1, self.mux_ctrl):
             np.random.shuffle(id_list)
@@ -194,7 +194,7 @@ class TwoDimEncoding(object):
         print('Total number of merged test cube is {}'.format(num_merged_cube))
         for id in range(num_merged_cube):
             specified_num[id] = self.merged_array[id].sum()
-            activated_num[id] = = self.encoded_group[id].sum() \
+            activated_num[id] = self.encoded_group[id].sum() \
                             * self.encoded_chain[id].sum()
             if (activated / self.num_id) <= constraint:
                 encoded_success += 1
