@@ -129,34 +129,42 @@ class TwoDimEncoding(object):
         '''
         Merge two testing cube.
         '''
-        for i in range(row1.shape[0]):
-            if row2[i] == 1:
-                row1[i] = 1
-        return row1
+        for i in range(cube1.shape[0]):
+            if cube2[i] == 1:
+                cube1[i] = 1
+        return cube1 
     
     def calculate_activated_percentage(self, cube):
-        return cube.sum()/row.shape[0]
+        return cube.sum()/cube.shape[0]
 
     def merging(self):
         print('*' * 15)
         print('Start Merging.')
         mlb = copy.deepcopy(self.mlb)
+        mask = np.zeros(mlb.shape[0])
+        idx_now = 0
         merged_array = []
         # picked_cube = []
-        merged_cube = mlb[0]
-        
-        mlb = np.delete(mlb, 0, 0)
-        while mlb.shape[0] >= 1:
+        merged_cube = mlb[idx_now]
+        # mlb = np.delete(mlb, 0, 0)
+        # while mlb.shape[0] >= 1:
+        # while mask.sum() != mlb.shape[0]:
+        while idx_now == (mlb.shape[0] - 1):
             for (id, row) in enumerate(mlb):
+                if mask[id] == 1:
+                    continue
                 if self.check_conflict(merged_cube, row):
                     merged_cube = self.merge_two_cube(merged_cube, mlb[id])
                     # picked_cube.append(mlb[id])
-                    mlb = np.delete(mlb, id, 0)
+                    mask[id] = 1
+                    # mlb = np.delete(mlb, id, 0)
                     if self.calculate_activated_percentage(merged_cube) > self.upper_bound:
                         merged_array.append(merged_cube)
-                        merged_cube = mlb[0]
+                        idx_now += 1
+                        mask[idx_now] = 1
+                        merged_cube = mlb[idx_now]
                         # picked_cube = []
-                        mlb = np.delete(mlb, 0, 0)
+                        # mlb = np.delete(mlb, 0, 0)
                         continue
             merged_array.append(merged_cube)
             merged_cube = mlb[0]
@@ -220,7 +228,7 @@ class TwoDimEncoding(object):
         print('Encoding success rate is {:.2f}%.'.format(100.*succeeded))
 
 
-        
+mlb = mlb[:100] 
 encoder = TwoDimEncoding(mlb)
 encoder.merging()
 encoder.encoding()
