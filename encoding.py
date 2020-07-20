@@ -171,8 +171,6 @@ class TwoDimEncoding(object):
                     # mlb = np.delete(mlb, id, 0)
                     if self.calculate_activated_percentage(merged_cube) > self.upper_bound:
                         merged_array.append(merged_cube)
-                        print('Out of range')
-                        # print(merged_array)
                         while mask[idx_now] == 1 and idx_now < (mlb.shape[0] - 1):
                             idx_now += 1
                         mask[idx_now] = 1
@@ -229,7 +227,7 @@ class TwoDimEncoding(object):
 
         if not os.path.isdir('figs/'):
                 os.makedirs(os.path.dirname('figs/'))
-        plt.savefig('figs/hist.png')
+        plt.savefig('figs/hist_10k.png')
 
         specified_percentage = specified_num.sum() / (self.num_merged_cube * self.num_id)
         activated_percentage = activated_num.sum() / (self.num_merged_cube * self.num_id)
@@ -239,7 +237,7 @@ class TwoDimEncoding(object):
         print('Encoding success rate is {:.2f}%.'.format(100.*succeeded))
 
 
-mlb = mlb[:100] 
+# mlb = mlb[:10000] 
 encoder = TwoDimEncoding(mlb)
 encoder.merging()
 encoder.encoding()
