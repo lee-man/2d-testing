@@ -144,7 +144,7 @@ class TwoDimEncoding(object):
         return cube.sum()/cube.shape[0]
 
     def calculate_activated_percentage(self, merged_cube, to_merged_cube):
-        cube = merged_cube(merged_cube, to_merged_cube)
+        cube = self.merge_two_cube(merged_cube, to_merged_cube)
         group_bit = np.zeros((self.mux_ctrl, self.group_ctrl))
         chain_bit = np.zeros((self.mux_ctrl, self.chain_ctrl))
         for mux_bit in range(self.mux_ctrl):
@@ -180,7 +180,7 @@ class TwoDimEncoding(object):
                 if mask[id] == 1:
                     continue
                 if self.check_conflict(merged_cube, row):
-                    merged_cube_candidate, activated_percentage = self.calculate_activated_percentage(merged_cube, mlb[id])
+                    activated_percentage, merged_cube_candidate = self.calculate_activated_percentage(merged_cube, mlb[id])
                     if activated_percentage <= self.upper_bound:
                         merged_cube = merged_cube_candidate
                         mask[id] = 1
@@ -249,7 +249,7 @@ class TwoDimEncoding(object):
         # print('Encoding success   rate is {:.2f}%.'.format(100.*succeeded))
 
 
-# mlb = mlb[:10000] 
+mlb = mlb[:10000] 
 encoder = TwoDimEncoding(mlb)
 encoder.merging()
 encoder.encoding()
