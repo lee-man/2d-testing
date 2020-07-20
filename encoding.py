@@ -111,36 +111,54 @@ class TwoDimEncoding(object):
         '''
         return (cube1 * cube2).sum() == 0
     
-    def determin_group_bit(self, cube, mux_id):
-        '''
-        Determine the group control bits for a specific row
-        '''
-        if not mux_id < self.mux_ctrl:
-            raise VauleError('The MUX id is beyond the range')
-        for (id, ele) in enumerate(row):
-            if ele == 1:
-                encoded_group_ctrl[group_mapping[mux_id][str(id)] % group_ctrl] = 1
-        return encoded_group_ctrl
+    # def determin_group_bit(self, cube, mux_id):
+    #     '''
+    #     Determine the group control bits for a specific row
+    #     '''
+    #     if not mux_id < self.mux_ctrl:
+    #         raise VauleError('The MUX id is beyond the range')
+    #     for (id, ele) in enumerate(row):
+    #         if ele == 1:
+    #             encoded_group_ctrl[group_mapping[mux_id][str(id)] % group_ctrl] = 1
+    #     return encoded_group_ctrl
 
-    def calculate_group_overlap(self, cube1, cube2, mux_id):
-        '''
-        Cacalate the overlap percentage of grouping control bits
-        '''
-        ctrl1 = self.determin_group_bit(cube1, mux_id)
-        ctrl2 = self.determin_group_bit(cube1, mux_id)
-        return (ctrl1 * ctrl2).sum() / (ctrl1 + ctrl2 - ctrl1 * ctrl2).sum() 
+    # def calculate_group_overlap(self, cube1, cube2, mux_id):
+    #     '''
+    #     Cacalate the overlap percentage of grouping control bits
+    #     '''
+    #     ctrl1 = self.determin_group_bit(cube1, mux_id)
+    #     ctrl2 = self.determin_group_bit(cube1, mux_id)
+    #     return (ctrl1 * ctrl2).sum() / (ctrl1 + ctrl2 - ctrl1 * ctrl2).sum() 
 
     def merge_two_cube(self, cube1, cube2):
         '''
         Merge two testing cube.
         '''
+        cube = np.zeros(cube1.shape[0])
         for i in range(cube1.shape[0]):
-            if cube2[i] == 1:
-                cube1[i] = 1
-        return cube1 
+            if cube1[i] == 1 or cube2[i] == 1:
+                cube[i] = 1
+        return cube
     
-    def calculate_activated_percentage(self, cube):
+    def calculate_specified_percentage(self, cube):
         return cube.sum()/cube.shape[0]
+
+    def calculate_activated_percentage(self, merged_cube, to_merged_cube):
+        cube = merged_cube(merged_cube, to_merged_cube)
+        group_bit = np.zeros((self.mux_ctrl, self.group_ctrl))
+        chain_bit = np.zeros((self.mux_ctrl, self.chain_ctrl))
+        for mux_bit in range(self.mux_ctrl):
+                for (ele_id, ele) in enumerate(cube):
+                    if ele == 1.0:
+                        group_bit[mux_bit, self.group_mapping[mux_bit][str(ele_id)] % self.group_ctrl] = 1
+                        chain_bit[mux_bit, self.group_mapping[mux_bit][str(ele_id)] // self.group_ctrl] = 1
+        encoded_mux = np.argmin(group_bit.sum(axis=1) * chain_bit.sum(axis=1))
+        activated_num = group_bit[encoded_mux].sum() \
+                            * chain_bit[encoded_mux].sum()
+        return activated_num / cube.shape[0], cube
+
+
+
 
     def merging(self):
         print('*' * 15)
@@ -151,9 +169,6 @@ class TwoDimEncoding(object):
         merged_array = []
         # picked_cube = []
         merged_cube = copy.deepcopy(mlb[idx_now])
-        # mlb = np.delete(mlb, 0, 0)
-        # while mlb.shape[0] >= 1:
-        # while mask.sum() != mlb.shape[0]:
         while idx_now < (mlb.shape[0] - 1):
             for (id, row) in enumerate(mlb):
                 if id == (mlb.shape[0] - 1):
@@ -165,18 +180,16 @@ class TwoDimEncoding(object):
                 if mask[id] == 1:
                     continue
                 if self.check_conflict(merged_cube, row):
-                    merged_cube = self.merge_two_cube(merged_cube, mlb[id])
-                    # picked_cube.append(mlb[id])
-                    mask[id] = 1
-                    # mlb = np.delete(mlb, id, 0)
-                    if self.calculate_activated_percentage(merged_cube) > self.upper_bound:
+                    merged_cube_candidate, activated_percentage = self.calculate_activated_percentage(merged_cube, mlb[id])
+                    if activated_percentage <= self.upper_bound:
+                        merged_cube = merged_cube_candidate
+                        mask[id] = 1
+                    else:
                         merged_array.append(merged_cube)
                         while mask[idx_now] == 1 and idx_now < (mlb.shape[0] - 1):
                             idx_now += 1
                         mask[idx_now] = 1
                         merged_cube = copy.deepcopy(mlb[idx_now])
-                        # picked_cube = []
-                        # mlb = np.delete(mlb, 0, 0)
                         break
                     
         self.merged_array = np.array(merged_array)
@@ -196,7 +209,7 @@ class TwoDimEncoding(object):
                     if ele == 1.0:
                         group_bit[mux_bit, self.group_mapping[mux_bit][str(ele_id)] % self.group_ctrl] = 1
                         chain_bit[mux_bit, self.group_mapping[mux_bit][str(ele_id)] // self.group_ctrl] = 1
-            self.encoded_mux = np.argmin(group_bit.sum(axis=1) * chain_bit.sum(axis=1))
+            self.encoded_mux[id] = np.argmin(group_bit.sum(axis=1) * chain_bit.sum(axis=1))
             self.encoded_group[id] = group_bit[self.encoded_mux]
             self.encoded_chain[id] = chain_bit[self.encoded_mux]
 
@@ -205,17 +218,16 @@ class TwoDimEncoding(object):
         print('Evalutation.')
         specified_num = np.zeros(self.num_merged_cube)
         activated_num = np.zeros(self.num_merged_cube)
-        encoded_efficiency = 0
-        encoded_success = 0
-        constraint = 0.5
+        # encoded_success = 0
+        # constraint = 0.5
         self.num_merged_cube = self.merged_array.shape[0]
         print('Total number of merged test cube is {}'.format(self.num_merged_cube))
         for id in range(self.num_merged_cube):
             specified_num[id] = self.merged_array[id].sum()
             activated_num[id] = self.encoded_group[id].sum() \
                             * self.encoded_chain[id].sum()
-            if (activated_num[id] / self.num_id) <= constraint:
-                encoded_success += 1
+            # if (activated_num[id] / self.num_id) <= constraint:
+            #     encoded_success += 1
         ranges = (np.min(specified_num), np.max(activated_num))
         
         plt.figure()
@@ -231,10 +243,10 @@ class TwoDimEncoding(object):
 
         specified_percentage = specified_num.sum() / (self.num_merged_cube * self.num_id)
         activated_percentage = activated_num.sum() / (self.num_merged_cube * self.num_id)
-        succeeded =  encoded_success / self.num_merged_cube
+        # succeeded =  encoded_success / self.num_merged_cube
         print('Specified scan chain percentage after merging is {:.2f}%.'.format(100.*specified_percentage))
         print('Activaed scan chain percentages is {:.2f}%.'.format(100.*activated_percentage))
-        print('Encoding success rate is {:.2f}%.'.format(100.*succeeded))
+        # print('Encoding success   rate is {:.2f}%.'.format(100.*succeeded))
 
 
 # mlb = mlb[:10000] 
