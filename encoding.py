@@ -64,13 +64,15 @@ print('The # and percentage of activated scan chains are {:.2f} and {:.2f}%.'.fo
 
 # Draw the histogram of dense of each scan chain
 sc_counts = np.zeros(num_id)
-for (id, row) in mlb:
+for row in mlb:
     for (eid, element) in enumerate(row):
         if element == 1:
-            sc_counts(eid) += 1
+            sc_counts[eid] += 1
 
 plt.figure()
-plt(sc_counts)
+x = [i for i in range(num_id)]
+# plt.plot(sc_counts)
+plt.scatter(x, sc_counts)
 plt.xlabel('Scan Chain ID')
 plt.ylabel('Density')
 if not os.path.isdir('figs/'):
@@ -254,7 +256,7 @@ class TwoDimEncoding(object):
 
         if not os.path.isdir('figs/'):
                 os.makedirs(os.path.dirname('figs/'))
-        plt.savefig('figs/hist_10k.png')
+        plt.savefig('figs/hist.png')
 
         specified_percentage = specified_num.sum() / (self.num_merged_cube * self.num_id)
         activated_percentage = activated_num.sum() / (self.num_merged_cube * self.num_id)
