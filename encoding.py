@@ -130,7 +130,7 @@ class TwoDimEncoding(object):
             self.group_mapping[j] = {str(id): i for i, id in enumerate(id_list)}
 
         # Build the weight matrix
-        weight_mat = np.zeros((self.num_id, self.num_id)
+        weight_mat = np.zeros((self.num_id, self.num_id))
         # TO DO: change to matric manipulation
         print(self.sc_counts[:4])
         for i in range(self.num_id):
