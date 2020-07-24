@@ -143,10 +143,15 @@ class TwoDimEncoding(object):
 
         # Stochastic
         elif mode == 'stochastic':
+            # Did not consider the disentangle yet
+            sc_conf = np.zeros((self.mux_ctrl-1, self.num_id, self.group_ctrl))
+
             for j in range(1, self.mux_ctrl):
                 id_list = np.arange(self.num_id)
                 id_list = np.random.choice(id_list, size=num_id, replace=False, p=self.sc_counts)
                 self.group_mapping[j] = {str(id): i for i, id in enumerate(id_list)}
+                # for (key, value) in self.group_mapping
+
         
         else:
             raise NotImplementedError('The mode should be either random, stochastic or deterministic')
@@ -200,8 +205,8 @@ class TwoDimEncoding(object):
         for mux_bit in range(self.mux_ctrl):
                 for (ele_id, ele) in enumerate(cube):
                     if ele == 1.0:
-                        group_bit[mux_bit, self.group_mapping[mux_bit][str(ele_id)] % self.group_ctrl] = 1
-                        chain_bit[mux_bit, self.group_mapping[mux_bit][str(ele_id)] // self.group_ctrl] = 1
+                        group_bit[mux_bit, self.group_mapping[mux_bit][str(ele_id)] // self.chain_ctrl] = 1
+                        chain_bit[mux_bit, self.group_mapping[mux_bit][str(ele_id)] % self.chain_ctrl] = 1
         encoded_mux = np.argmin(group_bit.sum(axis=1) * chain_bit.sum(axis=1))
         activated_num = group_bit[encoded_mux].sum() \
                             * chain_bit[encoded_mux].sum()
@@ -255,8 +260,8 @@ class TwoDimEncoding(object):
             for mux_bit in range(self.mux_ctrl):
                 for (ele_id, ele) in enumerate(sample):
                     if ele == 1.0:
-                        group_bit[mux_bit, self.group_mapping[mux_bit][str(ele_id)] % self.group_ctrl] = 1
-                        chain_bit[mux_bit, self.group_mapping[mux_bit][str(ele_id)] // self.group_ctrl] = 1
+                        group_bit[mux_bit, self.group_mapping[mux_bit][str(ele_id)] // self.chain_ctrl] = 1
+                        chain_bit[mux_bit, self.group_mapping[mux_bit][str(ele_id)] % self.chain_ctrl] = 1
             self.encoded_mux[id] = np.argmin(group_bit.sum(axis=1) * chain_bit.sum(axis=1))
             self.encoded_group[id] = group_bit[int(self.encoded_mux[id])]
             self.encoded_chain[id] = chain_bit[int(self.encoded_mux[id])]
