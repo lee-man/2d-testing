@@ -210,8 +210,8 @@ class TwoDimEncoding(object):
                         group_bit[mux_bit, self.group_mapping[mux_bit][str(ele_id)] % self.group_ctrl] = 1
                         chain_bit[mux_bit, self.group_mapping[mux_bit][str(ele_id)] // self.group_ctrl] = 1
             self.encoded_mux[id] = np.argmin(group_bit.sum(axis=1) * chain_bit.sum(axis=1))
-            self.encoded_group[id] = group_bit[self.encoded_mux]
-            self.encoded_chain[id] = chain_bit[self.encoded_mux]
+            self.encoded_group[id] = group_bit[int(self.encoded_mux[id])]
+            self.encoded_chain[id] = chain_bit[int(self.encoded_mux[id])]
 
     def eval(self):
         print('*' * 15)
@@ -249,13 +249,12 @@ class TwoDimEncoding(object):
         # print('Encoding success   rate is {:.2f}%.'.format(100.*succeeded))
 
 
-mlb = mlb[:10000] 
+# mlb = mlb[:10000] 
 encoder = TwoDimEncoding(mlb)
 encoder.merging()
 encoder.encoding()
 encoder.eval()
    
-
 
 
 # 4. Encoding
