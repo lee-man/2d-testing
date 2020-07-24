@@ -17,6 +17,7 @@ import seaborn as sns
 num_sc = 0
 num_exp = 0
 
+###########################
 # 1. get the unique id list
 print('#' * 15)
 print('Get the unique id list')
@@ -39,11 +40,9 @@ print('The size of testing data is {}'.format(num_exp))
 # print('The Min and Max of id list are {} and {}.'.format(min(id_list), max(id_list)))
 
 
+
+###########################
 # 2. Multi-Label Binarizer
-# mlb = MultiLabelBinarizer()
-# with open('data/LOG.csv', encoding='utf-8') as f:
-#     f_csv = csv.reader(f)
-#     mlb.fit_transform(f_csv)
 num_id = 339
 # Create the Multi-Label Matrix
 print('Create Multi-Label Binarizer')
@@ -63,8 +62,26 @@ with open('data/LOG.csv', encoding='utf-8') as f:
 print('The # and percentage of activated scan chains are {:.2f} and {:.2f}%.'.format(num_sc / num_exp, \
         100. * num_sc / (num_exp * num_id)))
 
+# Draw the histogram of dense of each scan chain
+sc_counts = np.zeros(num_id)
+for (id, row) in mlb:
+    for (eid, element) in enumerate(row):
+        if element == 1:
+            sc_counts(eid) += 1
+
+plt.figure()
+plt(sc_counts)
+plt.xlabel('Scan Chain ID')
+plt.ylabel('Density')
+if not os.path.isdir('figs/'):
+    os.makedirs(os.path.dirname('figs/'))
+plt.savefig('figs/sc_counts.png')
+
+exit()
 
 
+##########################
+# 3. Merging and Encoding using 2D structure
 class TwoDimEncoding(object):
     '''
     The class for Two-Dimention Low-Power Encoding.
@@ -158,8 +175,6 @@ class TwoDimEncoding(object):
         return activated_num / cube.shape[0], cube
 
 
-
-
     def merging(self):
         print('*' * 15)
         print('Start Merging.')
@@ -249,12 +264,15 @@ class TwoDimEncoding(object):
         # print('Encoding success   rate is {:.2f}%.'.format(100.*succeeded))
 
 
-# mlb = mlb[:10000] 
-encoder = TwoDimEncoding(mlb)
-encoder.merging()
-encoder.encoding()
-encoder.eval()
-   
+
+
+if __name__ == '__main__':
+    # mlb = mlb[:10000] 
+    encoder = TwoDimEncoding(mlb)
+    encoder.merging()
+    encoder.encoding()
+    encoder.eval()
+    
 
 
 # 4. Encoding
