@@ -62,24 +62,7 @@ with open('data/LOG.csv', encoding='utf-8') as f:
 print('The # and percentage of activated scan chains are {:.2f} and {:.2f}%.'.format(num_sc / num_exp, \
         100. * num_sc / (num_exp * num_id)))
 
-# Draw the histogram of dense of each scan chain
-sc_counts = np.zeros(num_id)
-for row in mlb:
-    for (eid, element) in enumerate(row):
-        if element == 1:
-            sc_counts[eid] += 1
 
-plt.figure()
-x = [i for i in range(num_id)]
-# plt.plot(sc_counts)
-plt.scatter(x, sc_counts)
-plt.xlabel('Scan Chain ID')
-plt.ylabel('Density')
-if not os.path.isdir('figs/'):
-    os.makedirs(os.path.dirname('figs/'))
-plt.savefig('figs/sc_counts.png')
-
-exit()
 
 
 ##########################
@@ -97,6 +80,7 @@ class TwoDimEncoding(object):
         self.chain_ctrl = chain_ctrl
         self.mux_ctrl = int(math.pow(2, mux_ctrl))
         self.upper_bound = upper_bound
+        self.sc_counts = None
         self.group_mapping = {}
         self.merged_array = None
         self.num_merged_cube = None
@@ -104,6 +88,7 @@ class TwoDimEncoding(object):
         self.encoded_chain = None
         self.encoded_mux = None
         self._print_info()
+        self.scan_chain_hist()
         self.generate_group_mapping()
         
     
@@ -114,6 +99,26 @@ class TwoDimEncoding(object):
         print('Control bits settings:{} chain ctrl, {} group ctrl and mux crtl'.format(self.chain_ctrl, self.group_ctrl, self.mux_ctrl))
         print('The upper bound of activated scan chian for low power encoding is {}.'.format(self.upper_bound))
 
+    def scan_chain_hist(self, draw=False):
+
+        # Draw the histogram of dense of each scan chain
+        self.sc_counts = np.zeros(num_id)
+        for row in self.mlb:
+            for (eid, element) in enumerate(row):
+                if element == 1:
+                    self.sc_counts[eid] += 1
+
+        if draw:
+            plt.figure()
+            x = [i for i in range(self.num_id)]
+            # plt.plot(sc_counts)
+            plt.scatter(x, self.sc_counts)
+            plt.xlabel('Scan Chain ID')
+            plt.ylabel('Density')
+            if not os.path.isdir('figs/'):
+                os.makedirs(os.path.dirname('figs/'))
+            plt.savefig('figs/sc_counts.png')
+
     def generate_group_mapping(self):
         '''
         Group Mapping: map the scan chain id to the underlying line.
@@ -123,6 +128,19 @@ class TwoDimEncoding(object):
         for j in range(1, self.mux_ctrl):
             np.random.shuffle(id_list)
             self.group_mapping[j] = {str(id): i for i, id in enumerate(id_list)}
+
+        # Build the weight matrix
+        weight_mat = np.zeros((self.num_id, self.num_id)
+        # TO DO: change to matric manipulation
+        print(self.sc_counts[:4])
+        for i in range(self.num_id):
+            weight_mat[i] = self.sc_counts[i] + self.sc_counts
+        print(weight_mat[:4, :4])
+        exit()
+        # Stochaistic
+
+        # Deterministic
+
             
     def check_conflict(self, cube1, cube2):
         '''
