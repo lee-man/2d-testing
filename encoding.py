@@ -72,7 +72,7 @@ class TwoDimEncoding(object):
     The class for Two-Dimention Low-Power Encoding.
 
     '''
-    def __init__(self, mlb, group_ctrl=19, chain_ctrl=18, mux_ctrl=3, upper_bound=0.5):
+    def __init__(self, mlb, group_ctrl=19, chain_ctrl=18, mux_ctrl=3, upper_bound=0.5, map_mode='Stochastic'):
         self.mlb = mlb
         self.num_cube = mlb.shape[0]
         self.num_id = mlb.shape[1]
@@ -118,26 +118,39 @@ class TwoDimEncoding(object):
             if not os.path.isdir('figs/'):
                 os.makedirs(os.path.dirname('figs/'))
             plt.savefig('figs/sc_counts.png')
+        self.sc_counts /= self.sc_counts.max()
 
-    def generate_group_mapping(self):
+    def generate_group_mapping(self, mode='random'):
         '''
         Group Mapping: map the scan chain id to the underlying line.
         '''
+        
         id_list = np.arange(self.num_id)
         self.group_mapping[0] = {str(id): id for id in range(self.num_id)}
-        for j in range(1, self.mux_ctrl):
-            np.random.shuffle(id_list)
-            self.group_mapping[j] = {str(id): i for i, id in enumerate(id_list)}
+        # Random
+        if mode == 'random':
+            # id_list = np.arange(self.num_id)
+            # self.group_mapping[0] = {str(id): id for id in range(self.num_id)}
+            for j in range(1, self.mux_ctrl):
+                np.random.shuffle(id_list)
+                self.group_mapping[j] = {str(id): i for i, id in enumerate(id_list)}
 
-        # Build the weight matrix
-        weight_mat = np.zeros((self.num_id, self.num_id))
-        # TO DO: change to matric manipulation
-        print(self.sc_counts[:4])
-        for i in range(self.num_id):
-            weight_mat[i] = self.sc_counts[i] + self.sc_counts
-        print(weight_mat[:4, :4])
-        exit()
-        # Stochaistic
+        # # Build the weight matrix
+        # weight_mat = np.zeros((self.num_id, self.num_id))
+        # # TO DO: change to matric manipulation
+        # for i in range(self.num_id):
+        #     weight_mat[i] = self.sc_counts[i] + self.sc_counts
+
+        # Stochastic
+        elif mode == 'stochastic'
+            for j in range(1, self.mux_ctrl):
+                id_list = np.arange(self.num_id)
+                id_list = np.random.choice(id_list, size=num_id, replace=False, p=self.sc_counts)
+                self.group_mapping[j] = {str(id): i for i, id in enumerate(id_list)}
+        
+        else:
+            raise NotImplementedError('The mode should be either random, stochastic or deterministic')
+        
 
         # Deterministic
 
@@ -187,8 +200,8 @@ class TwoDimEncoding(object):
         for mux_bit in range(self.mux_ctrl):
                 for (ele_id, ele) in enumerate(cube):
                     if ele == 1.0:
-                        group_bit[mux_bit, self.group_mapping[mux_bit][str(ele_id)] % self.group_ctrl] = 1
-                        chain_bit[mux_bit, self.group_mapping[mux_bit][str(ele_id)] // self.group_ctrl] = 1
+                        group_bit[mux_bit, self.group_mapping[str(mux_bit)][str(ele_id)] % self.group_ctrl] = 1
+                        chain_bit[mux_bit, self.group_mapping[str(mux_bit)][str(ele_id)] // self.group_ctrl] = 1
         encoded_mux = np.argmin(group_bit.sum(axis=1) * chain_bit.sum(axis=1))
         activated_num = group_bit[encoded_mux].sum() \
                             * chain_bit[encoded_mux].sum()
@@ -242,8 +255,8 @@ class TwoDimEncoding(object):
             for mux_bit in range(self.mux_ctrl):
                 for (ele_id, ele) in enumerate(sample):
                     if ele == 1.0:
-                        group_bit[mux_bit, self.group_mapping[mux_bit][str(ele_id)] % self.group_ctrl] = 1
-                        chain_bit[mux_bit, self.group_mapping[mux_bit][str(ele_id)] // self.group_ctrl] = 1
+                        group_bit[mux_bit, self.group_mapping[str(mux_bit)][str(ele_id)] % self.group_ctrl] = 1
+                        chain_bit[mux_bit, self.group_mapping[str(mux_bit)][str(ele_id)] // self.group_ctrl] = 1
             self.encoded_mux[id] = np.argmin(group_bit.sum(axis=1) * chain_bit.sum(axis=1))
             self.encoded_group[id] = group_bit[int(self.encoded_mux[id])]
             self.encoded_chain[id] = chain_bit[int(self.encoded_mux[id])]
@@ -288,7 +301,7 @@ class TwoDimEncoding(object):
 
 if __name__ == '__main__':
     # mlb = mlb[:10000] 
-    encoder = TwoDimEncoding(mlb)
+    encoder = TwoDimEncoding(mlb, map_mode='stochastic')
     encoder.merging()
     encoder.encoding()
     encoder.eval()
