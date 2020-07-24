@@ -96,7 +96,7 @@ class TwoDimEncoding(object):
         print('*' * 5, 'Statistic', '*' * 5)
         print('The size of testing dataset is {}'.format(self.num_cube))
         print('The size of each test cube is {}'.format(self.num_id))
-        print('Control bits settings:{} chain ctrl, {} group ctrl and mux crtl'.format(self.chain_ctrl, self.group_ctrl, self.mux_ctrl))
+        print('Control bits settings:{} chain ctrl, {} group ctrl and {} mux crtl'.format(self.chain_ctrl, self.group_ctrl, self.mux_ctrl))
         print('The upper bound of activated scan chian for low power encoding is {}.'.format(self.upper_bound))
 
     def scan_chain_hist(self, draw=False):
@@ -142,7 +142,7 @@ class TwoDimEncoding(object):
         #     weight_mat[i] = self.sc_counts[i] + self.sc_counts
 
         # Stochastic
-        elif mode == 'stochastic'
+        elif mode == 'stochastic':
             for j in range(1, self.mux_ctrl):
                 id_list = np.arange(self.num_id)
                 id_list = np.random.choice(id_list, size=num_id, replace=False, p=self.sc_counts)
@@ -200,8 +200,8 @@ class TwoDimEncoding(object):
         for mux_bit in range(self.mux_ctrl):
                 for (ele_id, ele) in enumerate(cube):
                     if ele == 1.0:
-                        group_bit[mux_bit, self.group_mapping[str(mux_bit)][str(ele_id)] % self.group_ctrl] = 1
-                        chain_bit[mux_bit, self.group_mapping[str(mux_bit)][str(ele_id)] // self.group_ctrl] = 1
+                        group_bit[mux_bit, self.group_mapping[mux_bit][str(ele_id)] % self.group_ctrl] = 1
+                        chain_bit[mux_bit, self.group_mapping[mux_bit][str(ele_id)] // self.group_ctrl] = 1
         encoded_mux = np.argmin(group_bit.sum(axis=1) * chain_bit.sum(axis=1))
         activated_num = group_bit[encoded_mux].sum() \
                             * chain_bit[encoded_mux].sum()
@@ -255,8 +255,8 @@ class TwoDimEncoding(object):
             for mux_bit in range(self.mux_ctrl):
                 for (ele_id, ele) in enumerate(sample):
                     if ele == 1.0:
-                        group_bit[mux_bit, self.group_mapping[str(mux_bit)][str(ele_id)] % self.group_ctrl] = 1
-                        chain_bit[mux_bit, self.group_mapping[str(mux_bit)][str(ele_id)] // self.group_ctrl] = 1
+                        group_bit[mux_bit, self.group_mapping[mux_bit][str(ele_id)] % self.group_ctrl] = 1
+                        chain_bit[mux_bit, self.group_mapping[mux_bit][str(ele_id)] // self.group_ctrl] = 1
             self.encoded_mux[id] = np.argmin(group_bit.sum(axis=1) * chain_bit.sum(axis=1))
             self.encoded_group[id] = group_bit[int(self.encoded_mux[id])]
             self.encoded_chain[id] = chain_bit[int(self.encoded_mux[id])]
@@ -305,45 +305,4 @@ if __name__ == '__main__':
     encoder.merging()
     encoder.encoding()
     encoder.eval()
-    
-
-
-# 4. Encoding
-# Toy Examples
-# num_training = 10000
-# len_sc = 100
-# group_ctrl = 10
-# chain_ctrl = 10
-# state_sc = [0., 1.]
-# prob_sc = [0.8, 0.2]
-# constraint = 0.5
-# encoded_efficiency = 0
-# encoded_success = 0 
-# 
-# samples = np.random.choice(state_sc, size=(num_training, len_sc), p=prob_sc)
-# encoded_samples_group = np.zeros((num_training, group_ctrl))
-# encoded_samples_chain = np.zeros((num_training, chain_ctrl))
-# 
-# # Specify the control bits of each test cube
-# for (id, sample) in enumerate(samples):
-#     for (ele_id, ele) in enumerate(sample):
-#         if ele == 1.0:
-#             encoded_samples_group[id, ele_id // group_ctrl] = 1
-#             encoded_samples_chain[id, ele_id % group_ctrl] = 1
-# 
-# # Caculate the encoding efficiency
-# for id in range(num_training): 
-#     activated = encoded_samples_group[id, :].sum() \
-#                * encoded_samples_chain[id, :].sum()
-#     if (activated / len_sc) <= constraint:
-#         encoded_success += 1
-#     encoded_efficiency += activated
-# 
-# efficiency = encoded_efficiency / (num_training * len_sc)
-# success = encoded_success / num_training 
-# print('Encoding Efficiency is {:.2f}%.'.format(100.*efficiency))
-# print('Encoding success rate is {:.2f}%.'.format(100.*success))
-
-
-
 
