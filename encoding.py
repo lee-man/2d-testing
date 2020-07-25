@@ -102,7 +102,7 @@ class TwoDimEncoding(object):
     def scan_chain_hist(self, draw=False):
 
         # Draw the histogram of dense of each scan chain
-        self.sc_counts = np.zeros(num_id)
+        self.sc_counts = np.zeros(self.num_id)
         for row in self.mlb:
             for (eid, element) in enumerate(row):
                 if element == 1:
@@ -121,7 +121,7 @@ class TwoDimEncoding(object):
 
         self.sc_counts /= self.sc_counts.max()
         ind = np.argsort(self.sc_counts)
-        print (ind)
+        print(ind)
         exit()
 
     def generate_group_mapping(self, mode='random'):
