@@ -118,7 +118,11 @@ class TwoDimEncoding(object):
             if not os.path.isdir('figs/'):
                 os.makedirs(os.path.dirname('figs/'))
             plt.savefig('figs/sc_counts.png')
+
         self.sc_counts /= self.sc_counts.max()
+        ind = np.argsort(self.sc_counts)
+        print (ind)
+        exit()
 
     def generate_group_mapping(self, mode='random'):
         '''
@@ -145,12 +149,16 @@ class TwoDimEncoding(object):
         elif mode == 'stochastic':
             # Did not consider the disentangle yet
             sc_conf = np.zeros((self.mux_ctrl-1, self.num_id, self.group_ctrl))
+            constrain = 0.5
+            satisfied = False
 
             for j in range(1, self.mux_ctrl):
                 id_list = np.arange(self.num_id)
                 id_list = np.random.choice(id_list, size=num_id, replace=False, p=self.sc_counts)
                 self.group_mapping[j] = {str(id): i for i, id in enumerate(id_list)}
-                # for (key, value) in self.group_mapping
+                for (key, value) in self.group_mapping[j]:
+                    group_id = value // self.chain_ctrl
+                    sc_conf[j][int(key)][group_id] = 1
 
         
         else:
