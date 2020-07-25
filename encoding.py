@@ -72,7 +72,7 @@ class TwoDimEncoding(object):
     The class for Two-Dimention Low-Power Encoding.
 
     '''
-    def __init__(self, mlb, group_ctrl=19, chain_ctrl=18, mux_ctrl=3, upper_bound=0.5, map_mode='Stochastic'):
+    def __init__(self, mlb, group_ctrl=19, chain_ctrl=18, mux_ctrl=3, upper_bound=0.5, sim_constraint=0.5, map_mode='Stochastic'):
         self.mlb = mlb
         self.num_cube = mlb.shape[0]
         self.num_id = mlb.shape[1]
@@ -80,6 +80,7 @@ class TwoDimEncoding(object):
         self.chain_ctrl = chain_ctrl
         self.mux_ctrl = int(math.pow(2, mux_ctrl))
         self.upper_bound = upper_bound
+        self.sim_constraint = sim_constraint
         self.sc_counts = None
         self.group_mapping = {}
         self.merged_array = None
@@ -120,10 +121,11 @@ class TwoDimEncoding(object):
             plt.savefig('figs/sc_counts.png')
 
         ind = np.argsort(self.sc_counts)
+        self.sc_counts = self.sc_counts[ind]
+        # normalize
         self.sc_counts /= self.sc_counts.max()
         # mutate the mlb according to the ranking
         self.mlb = self.mlb[:, ind]
-        print(self.mlb.shape)
         exit()
 
     def generate_group_mapping(self, mode='random'):
@@ -150,24 +152,29 @@ class TwoDimEncoding(object):
         # Stochastic
         elif mode == 'stochastic':
             # Did not consider the disentangle yet
-            sc_conf = np.zeros((self.mux_ctrl-1, self.num_id, self.group_ctrl))
-            constrain = 0.5
-            satisfied = False
+            sc_conf = np.zeros((self.mux_ctrl-1, self.num_id))
 
             for j in range(1, self.mux_ctrl):
-                id_list = np.arange(self.num_id)
-                id_list = np.random.choice(id_list, size=num_id, replace=False, p=self.sc_counts)
-                self.group_mapping[j] = {str(id): i for i, id in enumerate(id_list)}
-                for (key, value) in self.group_mapping[j]:
-                    group_id = value // self.chain_ctrl
-                    sc_conf[j][int(key)][group_id] = 1
-
+                satisfied = False
+                while not satisfied:
+                    id_list = np.arange(self.num_id)
+                    id_list = np.random.choice(id_list, size=num_id, replace=False, p=self.sc_counts)
+                    self.group_mapping[j] = {str(id): i for i, id in enumerate(id_list)}
+                    for (key, value) in self.group_mapping[j]:
+                        group_id = value // self.chain_ctrl
+                        sc_conf[j-1][int(key)] = group_id
+                    for conf_ind in range(j-1):
+                        similarity = (sc_conf[j-1] == sc_conf[conf_ind]) / self.num_id
+                        if similarity > self.sim_constraint:
+                            break
+                    if conf_ind == (j - 2):
+                        satisfied = True
+        elif mode == 'deterministic':
+            raise NotImplementedError('The deterministic mode has not been done yet')
         
         else:
             raise NotImplementedError('The mode should be either random, stochastic or deterministic')
         
-
-        # Deterministic
 
             
     def check_conflict(self, cube1, cube2):
