@@ -121,6 +121,7 @@ class TwoDimEncoding(object):
             plt.savefig('figs/sc_counts.png')
 
         ind = np.argsort(self.sc_counts)
+        ind = ind[::-1]
         self.sc_counts = self.sc_counts[ind]
         # normalize
         self.sc_counts /= self.sc_counts.max()
