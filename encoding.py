@@ -119,9 +119,11 @@ class TwoDimEncoding(object):
                 os.makedirs(os.path.dirname('figs/'))
             plt.savefig('figs/sc_counts.png')
 
-        self.sc_counts /= self.sc_counts.max()
+        print(self.sc_counts.shape)
         ind = np.argsort(self.sc_counts)
-        print(ind)
+        self.sc_counts /= self.sc_counts.max()
+        
+        # print(ind)
         exit()
 
     def generate_group_mapping(self, mode='random'):
