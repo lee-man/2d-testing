@@ -127,7 +127,6 @@ class TwoDimEncoding(object):
         self.sc_counts /= self.sc_counts.max()
         # mutate the mlb according to the ranking
         self.mlb = self.mlb[:, ind]
-        exit()
 
     def generate_group_mapping(self, mode='random'):
         '''
