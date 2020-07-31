@@ -134,8 +134,7 @@ class TwoDimEncoding(object):
         self.sc_counts /= self.sc_counts.max()
         # mutate the mlb according to the ranking
         self.mlb = self.mlb[:, ind]
-        print(self.mlb.size())
-        exit()
+
 
     def generate_group_mapping(self):
         '''
@@ -146,35 +145,30 @@ class TwoDimEncoding(object):
         self.group_mapping[0] = {str(id): id for id in range(self.num_id)}
         # Random
         if self.mode == 'random':
-            # id_list = np.arange(self.num_id)
-            # self.group_mapping[0] = {str(id): id for id in range(self.num_id)}
             for j in range(1, self.mux_ctrl):
                 np.random.shuffle(id_list)
-                self.group_mapping[j] = {str(id): i for i, id in enumerate(id_list)}
-
-        # # Build the weight matrix
-        # weight_mat = np.zeros((self.num_id, self.num_id))
-        # # TO DO: change to matric manipulation
-        # for i in range(self.num_id):
-        #     weight_mat[i] = self.sc_counts[i] + self.sc_counts
+                self.group_mapping[j] = {str(id): i for (i, id) in enumerate(id_list)}
 
         # Stochastic
         elif self.mode == 'stochastic':
-            # Did not consider the disentangle yet
+
             sc_conf = np.zeros((self.mux_ctrl-1, self.num_id))
 
             for j in range(1, self.mux_ctrl):
                 satisfied = False
                 while not satisfied:
                     id_list = np.arange(self.num_id)
-                    id_list = np.random.choice(id_list, size=num_id, replace=False, p=self.sc_counts)
-                    self.group_mapping[j] = {str(id): i for i, id in enumerate(id_list)}
+                    id_list = np.random.choice(id_list, size=self.num_id, replace=False, p=self.sc_counts)
+                    self.group_mapping[j] = {str(id): i for (i, id) in enumerate(id_list)}
                     for (key, value) in self.group_mapping[j]:
                         group_id = value // self.chain_ctrl
                         sc_conf[j-1][int(key)] = group_id
                     for conf_ind in range(j-1):
+                        print((sc_conf[j-1] == sc_conf[conf_ind]).shape)
+                        exit()
                         similarity = (sc_conf[j-1] == sc_conf[conf_ind]) / self.num_id
                         if similarity > self.sim_constraint:
+                            satisfied = False
                             break
                     if conf_ind == (j - 2):
                         satisfied = True
