@@ -166,6 +166,7 @@ class TwoDimEncoding(object):
                         sc_conf[j-1][int(key)] = group_id
                     for conf_ind in range(j-1):
                         similarity = (sc_conf[j-1] == sc_conf[conf_ind]).sum() / self.num_id
+                        print(similarity)
                         if similarity > self.sim_constraint:
                             sc_conf[j-1] = np.zeros(self.num_id)
                             break
