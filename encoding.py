@@ -5,6 +5,7 @@ import math
 from sklearn.preprocessing import MultiLabelBinarizer
 import numpy as np
 import copy
+import argparse
 
 from sklearn import metrics
 import matplotlib.pyplot as plt
@@ -30,6 +31,8 @@ with open('data/LOG.csv', encoding='utf-8') as f:
         for element in row:
             if element not in id_list and element != '' and element != '\ufeff326':
                 id_list.append(element)
+            if element == '\ufeff326' and element not in id_list:
+                id_list.append('326')
 
 id_list = sorted(id_list)
 num_id = len(id_list)
@@ -39,7 +42,7 @@ print('The length of id list is {}'.format(len(id_list)))
 print('The size of testing data is {}'.format(num_exp))
 # print('The Min and Max of id list are {} and {}.'.format(min(id_list), max(id_list)))
 
-
+exit()
 
 ###########################
 # 2. Multi-Label Binarizer
@@ -72,7 +75,7 @@ class TwoDimEncoding(object):
     The class for Two-Dimention Low-Power Encoding.
 
     '''
-    def __init__(self, mlb, group_ctrl=19, chain_ctrl=18, mux_ctrl=3, upper_bound=0.5, sim_constraint=0.5, map_mode='Stochastic'):
+    def __init__(self, mlb, group_ctrl=19, chain_ctrl=18, mux_ctrl=3, upper_bound=0.5, sim_constraint=0.5, map_mode='Stochastic', seed=0):
         self.mlb = mlb
         self.num_cube = mlb.shape[0]
         self.num_id = mlb.shape[1]
@@ -89,6 +92,7 @@ class TwoDimEncoding(object):
         self.encoded_chain = None
         self.encoded_mux = None
         self._print_info()
+        self._set_seed()
         self.scan_chain_hist()
         self.generate_group_mapping()
         
@@ -99,6 +103,11 @@ class TwoDimEncoding(object):
         print('The size of each test cube is {}'.format(self.num_id))
         print('Control bits settings:{} chain ctrl, {} group ctrl and {} mux crtl'.format(self.chain_ctrl, self.group_ctrl, self.mux_ctrl))
         print('The upper bound of activated scan chian for low power encoding is {}.'.format(self.upper_bound))
+
+    def _set_seed(self):
+        # Set Seed
+        np.random.seed(self.seed)
+        random.seed(self.seed)
 
     def scan_chain_hist(self, draw=False):
 
@@ -319,12 +328,42 @@ class TwoDimEncoding(object):
         # print('Encoding success   rate is {:.2f}%.'.format(100.*succeeded))
 
 
+def get_args():
+    '''
+    Arguments for 2D encoding structure.
+    '''
+    args = argparse.ArgumentParser(add_help=False,
+                                    description='Arguments for 2D encoding structure')
+    
+    args.add_argument('--map_mode',
+                        default='stochastic', type=str,
+                        help='The grouping/mapping mode')
 
 
-if __name__ == '__main__':
-    # mlb = mlb[:10000] 
-    encoder = TwoDimEncoding(mlb, map_mode='stochastic')
+    args.add_argument('--upper_bound', 
+                        default=0.5, type=float,
+                        help='The upper bound of specified scan chain per test cube after merging')
+    args.add_argument('--sim_constraint',
+                        default=0.5, type=float,
+                        help='The constraint of similirity between two grouping approaches')
+
+    args.add_argument('--seed',
+                        default=0, type=int,
+                        help='seed value')
+    return args.parse_args()
+
+
+
+
+def main(args):
+    args = get_args()
+    # initilize and evaluate
+    encoder = TwoDimEncoding(mlb, map_mode=args.map_mode, upper_bound=args.upper_bound, sim_constraint=args.upper_bound, seed=args.seed)
     encoder.merging()
     encoder.encoding()
     encoder.eval()
+
+
+if __name__ == '__main__':
+    main(get_args())
 
