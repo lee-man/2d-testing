@@ -31,16 +31,15 @@ with open('data/LOG.csv', encoding='utf-8') as f:
         for element in row:
             if element not in id_list and element != '' and element != '\ufeff326':
                 id_list.append(element)
-            if element == '\ufeff326' and element not in id_list:
+            if element == '\ufeff326' and ('326' not in id_list):
                 id_list.append('326')
 
 id_list = sorted(id_list)
 num_id = len(id_list)
 # print('Id List:')
 # print(id_list)
-print('The length of id list is {}'.format(len(id_list)))
+print('The length of id list is {}'.format(num_id))
 print('The size of testing data is {}'.format(num_exp))
-# print('The Min and Max of id list are {} and {}.'.format(min(id_list), max(id_list)))
 
 exit()
 
