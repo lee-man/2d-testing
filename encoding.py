@@ -73,13 +73,15 @@ class TwoDimEncoding(object):
     '''
     def __init__(self, mlb_path, group_ctrl=19, chain_ctrl=18, mux_ctrl=3, upper_bound=0.5, sim_constraint=0.5, map_mode='Stochastic', seed=0):
         self.mlb = np.load(mlb_path)
-        self.num_cube = mlb.shape[0]
-        self.num_id = mlb.shape[1]
+        self.num_cube = self.mlb.shape[0]
+        self.num_id = self.mlb.shape[1]
         self.group_ctrl = group_ctrl
         self.chain_ctrl = chain_ctrl
         self.mux_ctrl = int(math.pow(2, mux_ctrl))
         self.upper_bound = upper_bound
         self.sim_constraint = sim_constraint
+        self.mode = map_mode
+        self.seed = seed
         self.sc_counts = None
         self.group_mapping = {}
         self.merged_array = None
@@ -127,13 +129,15 @@ class TwoDimEncoding(object):
 
         ind = np.argsort(self.sc_counts)
         ind = ind[::-1]
+        print(ind)
+        exit()
         self.sc_counts = self.sc_counts[ind]
         # normalize
         self.sc_counts /= self.sc_counts.max()
         # mutate the mlb according to the ranking
         self.mlb = self.mlb[:, ind]
 
-    def generate_group_mapping(self, mode='random'):
+    def generate_group_mapping(self):
         '''
         Group Mapping: map the scan chain id to the underlying line.
         '''
@@ -141,7 +145,7 @@ class TwoDimEncoding(object):
         id_list = np.arange(self.num_id)
         self.group_mapping[0] = {str(id): id for id in range(self.num_id)}
         # Random
-        if mode == 'random':
+        if self.mode == 'random':
             # id_list = np.arange(self.num_id)
             # self.group_mapping[0] = {str(id): id for id in range(self.num_id)}
             for j in range(1, self.mux_ctrl):
@@ -155,7 +159,7 @@ class TwoDimEncoding(object):
         #     weight_mat[i] = self.sc_counts[i] + self.sc_counts
 
         # Stochastic
-        elif mode == 'stochastic':
+        elif self.mode == 'stochastic':
             # Did not consider the disentangle yet
             sc_conf = np.zeros((self.mux_ctrl-1, self.num_id))
 
@@ -174,7 +178,7 @@ class TwoDimEncoding(object):
                             break
                     if conf_ind == (j - 2):
                         satisfied = True
-        elif mode == 'deterministic':
+        elif self.mode == 'deterministic':
             raise NotImplementedError('The deterministic mode has not been done yet')
         
         else:
