@@ -14,13 +14,11 @@ plt.switch_backend('agg')
 import seaborn as sns
 
 
-
-num_sc = 0
-num_exp = 0
-
-###########################
-# 1. get the unique id list
-def summerize_id_list():
+def create_mlb():
+    ###########################
+    # 1. get the unique id list 
+    num_sc = 0
+    num_exp = 0
     print('#' * 15)
     print('Get the unique id list')
     id_list = []
@@ -42,9 +40,8 @@ def summerize_id_list():
     print('The length of id list is {}'.format(num_id))
     print('The size of testing data is {}'.format(num_exp))
 
-###########################
-# 2. Multi-Label Binarizer
-def create_mlb():
+    ###########################
+    # 2. Multi-Label Binarizer
     num_id = 339
     # Create the Multi-Label Matrix
     print('Create Multi-Label Binarizer')
