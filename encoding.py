@@ -129,13 +129,12 @@ class TwoDimEncoding(object):
 
         ind = np.argsort(self.sc_counts)
         ind = ind[::-1]
-        print(ind)
-        exit()
         self.sc_counts = self.sc_counts[ind]
         # normalize
         self.sc_counts /= self.sc_counts.max()
         # mutate the mlb according to the ranking
         self.mlb = self.mlb[:, ind]
+        print(self.mlb.size())
 
     def generate_group_mapping(self):
         '''
