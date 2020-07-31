@@ -63,8 +63,6 @@ def create_mlb():
 
     np.save('data/mlb.npy', mlb)
 
-create_mlb()
-exit()
 
 ##########################
 # 3. Merging and Encoding using 2D structure
@@ -73,8 +71,8 @@ class TwoDimEncoding(object):
     The class for Two-Dimention Low-Power Encoding.
 
     '''
-    def __init__(self, mlb, group_ctrl=19, chain_ctrl=18, mux_ctrl=3, upper_bound=0.5, sim_constraint=0.5, map_mode='Stochastic', seed=0):
-        self.mlb = mlb
+    def __init__(self, mlb_path, group_ctrl=19, chain_ctrl=18, mux_ctrl=3, upper_bound=0.5, sim_constraint=0.5, map_mode='Stochastic', seed=0):
+        self.mlb = np.load(mlb_path)
         self.num_cube = mlb.shape[0]
         self.num_id = mlb.shape[1]
         self.group_ctrl = group_ctrl
@@ -356,7 +354,7 @@ def get_args():
 def main(args):
     args = get_args()
     # initilize and evaluate
-    encoder = TwoDimEncoding(mlb, map_mode=args.map_mode, upper_bound=args.upper_bound, sim_constraint=args.upper_bound, seed=args.seed)
+    encoder = TwoDimEncoding('data/mlb.npy', map_mode=args.map_mode, upper_bound=args.upper_bound, sim_constraint=args.upper_bound, seed=args.seed)
     encoder.merging()
     encoder.encoding()
     encoder.eval()
