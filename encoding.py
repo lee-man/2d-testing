@@ -20,52 +20,54 @@ num_exp = 0
 
 ###########################
 # 1. get the unique id list
-print('#' * 15)
-print('Get the unique id list')
-id_list = []
-with open('data/LOG.csv', encoding='utf-8') as f:
-    f_csv = csv.reader(f)
-    
-    for row in f_csv:
-        num_exp += 1
-        for element in row:
-            if element not in id_list and element != '' and element != '\ufeff326':
-                id_list.append(element)
-            if element == '\ufeff326' and ('326' not in id_list):
-                id_list.append('326')
+def summerize_id_list():
+    print('#' * 15)
+    print('Get the unique id list')
+    id_list = []
+    with open('data/LOG.csv', encoding='utf-8') as f:
+        f_csv = csv.reader(f)
+        
+        for row in f_csv:
+            num_exp += 1
+            for element in row:
+                if element not in id_list and element != '' and element != '\ufeff326':
+                    id_list.append(element)
+                if element == '\ufeff326' and ('326' not in id_list):
+                    id_list.append('326')
 
-id_list = sorted(id_list)
-num_id = len(id_list)
-# print('Id List:')
-# print(id_list)
-print('The length of id list is {}'.format(num_id))
-print('The size of testing data is {}'.format(num_exp))
-
-exit()
+    id_list = sorted(id_list)
+    num_id = len(id_list)
+    # print('Id List:')
+    # print(id_list)
+    print('The length of id list is {}'.format(num_id))
+    print('The size of testing data is {}'.format(num_exp))
 
 ###########################
 # 2. Multi-Label Binarizer
-num_id = 339
-# Create the Multi-Label Matrix
-print('Create Multi-Label Binarizer')
-mlb = np.zeros((num_exp, num_id))
+def create_mlb():
+    num_id = 339
+    # Create the Multi-Label Matrix
+    print('Create Multi-Label Binarizer')
+    mlb = np.zeros((num_exp, num_id))
 
-with open('data/LOG.csv', encoding='utf-8') as f:
-    f_csv = csv.reader(f)
-    for (id, row) in enumerate(f_csv):
-        for element in row:
-            if element in id_list or element == '\ufeff326':
-                # idx =  id_list.index(element)
-                if element == '\ufeff326':
-                    element = '326'
-                idx = int(element) - 1
-                mlb[id, idx] = 1
-                num_sc += 1
-print('The # and percentage of activated scan chains are {:.2f} and {:.2f}%.'.format(num_sc / num_exp, \
-        100. * num_sc / (num_exp * num_id)))
+    with open('data/LOG.csv', encoding='utf-8') as f:
+        f_csv = csv.reader(f)
+        for (id, row) in enumerate(f_csv):
+            for element in row:
+                if element in id_list or element == '\ufeff326':
+                    # idx =  id_list.index(element)
+                    if element == '\ufeff326':
+                        element = '326'
+                    idx = int(element) - 1
+                    mlb[id, idx] = 1
+                    num_sc += 1
+    print('The # and percentage of activated scan chains are {:.2f} and {:.2f}%.'.format(num_sc / num_exp, \
+            100. * num_sc / (num_exp * num_id)))
 
+    np.save('data/mlb.npy', mlb)
 
-
+create_mlb()
+exit()
 
 ##########################
 # 3. Merging and Encoding using 2D structure
