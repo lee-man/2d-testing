@@ -161,9 +161,9 @@ class TwoDimEncoding(object):
                     id_list = np.arange(self.num_id)
                     id_list = np.random.choice(id_list, size=self.num_id, replace=False, p=self.sc_counts)
                     self.group_mapping[j] = {str(id): i for (i, id) in enumerate(id_list)}
-                    for (key, value) in self.group_mapping[j]:
-                        group_id = key // self.chain_ctrl
-                        sc_conf[j-1][int(value)] = group_id
+                    for (key, value) in self.group_mapping[j].items():
+                        group_id = value // self.chain_ctrl
+                        sc_conf[j-1][int(key)] = group_id
                     for conf_ind in range(j-1):
                         print((sc_conf[j-1] == sc_conf[conf_ind]).shape)
                         exit()
