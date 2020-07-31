@@ -169,9 +169,9 @@ class TwoDimEncoding(object):
                         exit()
                         similarity = (sc_conf[j-1] == sc_conf[conf_ind]) / self.num_id
                         if similarity > self.sim_constraint:
-                            satisfied = False
+                            sc_conf[j-1] = np.zeros(self.num_id)
                             break
-                    if conf_ind == (j - 2):
+                    if sc_conf[j-1].sum() != 0:
                         satisfied = True
         elif self.mode == 'deterministic':
             raise NotImplementedError('The deterministic mode has not been done yet')
