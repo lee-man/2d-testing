@@ -165,8 +165,6 @@ class TwoDimEncoding(object):
                         group_id = value // self.chain_ctrl
                         sc_conf[j-1][int(key)] = group_id
                     for conf_ind in range(j-1):
-                        print((sc_conf[j-1] == sc_conf[conf_ind]).shape)
-                        exit()
                         similarity = (sc_conf[j-1] == sc_conf[conf_ind]) / self.num_id
                         if similarity > self.sim_constraint:
                             sc_conf[j-1] = np.zeros(self.num_id)
@@ -313,7 +311,7 @@ class TwoDimEncoding(object):
 
         if not os.path.isdir('figs/'):
                 os.makedirs(os.path.dirname('figs/'))
-        plt.savefig('figs/hist.png')
+        plt.savefig('figs/hist_{}_{}.png'.format(self.upper_bound, self.sim_constraint))
 
         specified_percentage = specified_num.sum() / (self.num_merged_cube * self.num_id)
         activated_percentage = activated_num.sum() / (self.num_merged_cube * self.num_id)
