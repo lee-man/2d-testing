@@ -131,7 +131,8 @@ class TwoDimEncoding(object):
         ind = ind[::-1]
         self.sc_counts = self.sc_counts[ind]
         # normalize
-        self.sc_counts = (self.sc_counts + 10) / self.sc_counts.sum()
+        self.sc_counts += 10 # add 10 to avoid zero case.
+        self.sc_counts /= self.sc_counts.sum() 
         # mutate the mlb according to the ranking
         self.mlb = self.mlb[:, ind]
 
