@@ -354,7 +354,7 @@ def get_args():
 def main(args):
     args = get_args()
     # initilize and evaluate
-    encoder = TwoDimEncoding('data/mlb.npy', map_mode=args.map_mode, upper_bound=args.upper_bound, sim_constraint=args.upper_bound, seed=args.seed)
+    encoder = TwoDimEncoding('data/mlb.npy', map_mode=args.map_mode, upper_bound=args.upper_bound, sim_constraint=args.sim_constraint, seed=args.seed)
     encoder.merging()
     encoder.encoding()
     encoder.eval()
