@@ -135,6 +135,7 @@ class TwoDimEncoding(object):
         # mutate the mlb according to the ranking
         self.mlb = self.mlb[:, ind]
         print(self.mlb.size())
+        exit()
 
     def generate_group_mapping(self):
         '''
