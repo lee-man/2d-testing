@@ -345,7 +345,7 @@ def get_args():
                         default=0, type=int,
                         help='seed value')
     
-    args.add_argument('--mux_ctrl'
+    args.add_argument('--mux_ctrl',
                         default=3, type=int,
                         help='The control bits for MUX')
     return args.parse_args()
