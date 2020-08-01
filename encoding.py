@@ -344,6 +344,10 @@ def get_args():
     args.add_argument('--seed',
                         default=0, type=int,
                         help='seed value')
+    
+    args.add_argument('--mux_ctrl'
+                        default=3, type=int,
+                        help='The control bits for MUX')
     return args.parse_args()
 
 
@@ -352,7 +356,8 @@ def get_args():
 def main(args):
     args = get_args()
     # initilize and evaluate
-    encoder = TwoDimEncoding('data/mlb.npy', map_mode=args.map_mode, upper_bound=args.upper_bound, sim_constraint=args.sim_constraint, seed=args.seed)
+    encoder = TwoDimEncoding('data/mlb.npy', map_mode=args.map_mode, upper_bound=args.upper_bound, 
+                                sim_constraint=args.sim_constraint, seed=args.seed, mux_ctrl=self.mux_ctrl)
     encoder.merging()
     encoder.encoding()
     encoder.eval()
