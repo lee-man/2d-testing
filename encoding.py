@@ -71,7 +71,7 @@ class TwoDimEncoding(object):
     The class for Two-Dimention Low-Power Encoding.
 
     '''
-    def __init__(self, mlb_path, group_ctrl=19, chain_ctrl=18, mux_ctrl=3, upper_bound=0.5, sim_constraint=0.5, map_mode='Stochastic', seed=0):
+    def __init__(self, mlb_path, group_ctrl=19, chain_ctrl=18, mux_ctrl=3, upper_bound=0.5, sim_constraint=0.5, map_mode='stochastic', seed=0):
         self.mlb = np.load(mlb_path)
         self.num_cube = self.mlb.shape[0]
         self.num_id = self.mlb.shape[1]
@@ -90,7 +90,7 @@ class TwoDimEncoding(object):
         self.encoded_chain = None
         self.encoded_mux = None
         self._print_info()
-        self._set_seed()
+        # self._set_seed()
         self.scan_chain_hist()
         self.generate_group_mapping()
         
@@ -127,14 +127,16 @@ class TwoDimEncoding(object):
                 os.makedirs(os.path.dirname('figs/'))
             plt.savefig('figs/sc_counts.png')
 
-        ind = np.argsort(self.sc_counts)
-        ind = ind[::-1]
-        self.sc_counts = self.sc_counts[ind]
+        if self.mode == 'stochastic':
+            ind = np.argsort(self.sc_counts)
+            ind = ind[::-1]
+            # mutate the mlb according to the ranking
+            self.mlb = self.mlb[:, ind]
+            self.sc_counts = self.sc_counts[ind]
         # normalize
         self.sc_counts += 10 # add 10 to avoid zero case.
         self.sc_counts /= self.sc_counts.sum() 
-        # mutate the mlb according to the ranking
-        self.mlb = self.mlb[:, ind]
+        
 
 
     def generate_group_mapping(self):
@@ -240,30 +242,30 @@ class TwoDimEncoding(object):
         mask = np.zeros(mlb.shape[0])
         idx_now = 0
         merged_array = []
-        # picked_cube = []
         merged_cube = copy.deepcopy(mlb[idx_now])
         while idx_now < (mlb.shape[0] - 1):
             for (id, row) in enumerate(mlb):
                 if id == (mlb.shape[0] - 1):
-                    merged_array.append(merged_cube)
+                    if mask[id] == 1:
+                        merged_array.append(merged_cube)
+                    else:
+                        activated_percentage, merged_cube_candidate = self.calculate_activated_percentage(merged_cube, mlb[id])
+                        if activated_percentage <= self.upper_bound:
+                            merged_cube = merged_cube_candidate
+                        mask[id] = 1
+                        merged_array.append(merged_cube)
                     while mask[idx_now] == 1 and idx_now < (mlb.shape[0] - 1):
                         idx_now += 1
                     mask[idx_now] = 1
                     merged_cube = copy.deepcopy(mlb[idx_now])
-                if mask[id] == 1:
+                elif mask[id] == 1:
                     continue
-                if self.check_conflict(merged_cube, row):
+                elif self.check_conflict(merged_cube, row):
                     activated_percentage, merged_cube_candidate = self.calculate_activated_percentage(merged_cube, mlb[id])
                     if activated_percentage <= self.upper_bound:
                         merged_cube = merged_cube_candidate
                         mask[id] = 1
-                    else:
-                        merged_array.append(merged_cube)
-                        while mask[idx_now] == 1 and idx_now < (mlb.shape[0] - 1):
-                            idx_now += 1
-                        mask[idx_now] = 1
-                        merged_cube = copy.deepcopy(mlb[idx_now])
-                        break
+
                     
         self.merged_array = np.array(merged_array)
 
@@ -291,16 +293,13 @@ class TwoDimEncoding(object):
         print('Evalutation.')
         specified_num = np.zeros(self.num_merged_cube)
         activated_num = np.zeros(self.num_merged_cube)
-        # encoded_success = 0
-        # constraint = 0.5
         self.num_merged_cube = self.merged_array.shape[0]
         print('Total number of merged test cube is {}'.format(self.num_merged_cube))
         for id in range(self.num_merged_cube):
             specified_num[id] = self.merged_array[id].sum()
             activated_num[id] = self.encoded_group[id].sum() \
                             * self.encoded_chain[id].sum()
-            # if (activated_num[id] / self.num_id) <= constraint:
-            #     encoded_success += 1
+          
         ranges = (np.min(specified_num), np.max(activated_num))
         
         plt.figure()
@@ -312,7 +311,7 @@ class TwoDimEncoding(object):
 
         if not os.path.isdir('figs/'):
                 os.makedirs(os.path.dirname('figs/'))
-        plt.savefig('figs/hist_{}_{}.png'.format(self.upper_bound, self.sim_constraint))
+        plt.savefig('figs/hist_{}_{}_{}.png'.format(self.upper_bound, self.sim_constraint, self.mux_ctrl))
 
         specified_percentage = specified_num.sum() / (self.num_merged_cube * self.num_id)
         activated_percentage = activated_num.sum() / (self.num_merged_cube * self.num_id)
@@ -338,7 +337,7 @@ def get_args():
                         default=0.5, type=float,
                         help='The upper bound of specified scan chain per test cube after merging')
     args.add_argument('--sim_constraint',
-                        default=0.5, type=float,
+                        default=0.15, type=float,
                         help='The constraint of similirity between two grouping approaches')
 
     args.add_argument('--seed',
@@ -348,6 +347,10 @@ def get_args():
     args.add_argument('--mux_ctrl',
                         default=3, type=int,
                         help='The control bits for MUX')
+
+    args.add_argument('--num_compare',
+                        default=10, type=int,
+                        help='The number of test cubes to check')
     return args.parse_args()
 
 
