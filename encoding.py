@@ -311,7 +311,7 @@ class TwoDimEncoding(object):
 
         if not os.path.isdir('figs/'):
                 os.makedirs(os.path.dirname('figs/'))
-        plt.savefig('figs/hist_{}_{}_{}.png'.format(self.upper_bound, self.sim_constraint, self.mux_ctrl))
+        plt.savefig('figs/hist_{}_{}_{}_{}.png'.format(self.mode, self.upper_bound, self.sim_constraint, self.mux_ctrl))
 
         specified_percentage = specified_num.sum() / (self.num_merged_cube * self.num_id)
         activated_percentage = activated_num.sum() / (self.num_merged_cube * self.num_id)
