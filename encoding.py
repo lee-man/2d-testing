@@ -264,22 +264,23 @@ class TwoDimEncoding(object):
                 elif self.check_conflict(merged_cube, row):
                     activated_percentage, merged_cube_candidate = self.calculate_activated_percentage(merged_cube, row)
                     if activated_percentage <= self.upper_bound:
-                        # merged_cube = merged_cube_candidate
-                        # mask[id] = 1
-
-                        # heuristic merge: look forward 10 steps
-                        count = 0
-                        z = id + 1
-                        id_compare = id
-                        while (count <= self.num_compare) and (z < mlb.shape[0]):
-                            activated_percentage_z, merged_cube_candidate_z = self.calculate_activated_percentage(merged_cube, mlb[z])
-                            if (activated_percentage_z <= self.upper_bound) and (activated_percentage_z <= activated_percentage):
-                                id_compare = z
-                                merged_cube_candidate = merged_cube_candidate_z
-                                count += 1
-                            z += 1
-                        mask[id_compare] = 1
-                        merged_cube = merged_cube_candidate     
+                        if self.mode == 'random':
+                            merged_cube = merged_cube_candidate
+                            mask[id] = 1
+                        elif self.mode == 'stochastic':
+                            # heuristic merge: look forward 10 steps
+                            count = 0
+                            z = id + 1
+                            id_compare = id
+                            while (count <= self.num_compare) and (z < mlb.shape[0]):
+                                activated_percentage_z, merged_cube_candidate_z = self.calculate_activated_percentage(merged_cube, mlb[z])
+                                if (activated_percentage_z <= self.upper_bound) and (activated_percentage_z <= activated_percentage):
+                                    id_compare = z
+                                    merged_cube_candidate = merged_cube_candidate_z
+                                    count += 1
+                                z += 1
+                            mask[id_compare] = 1
+                            merged_cube = merged_cube_candidate     
 
 
                     
