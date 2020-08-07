@@ -246,6 +246,7 @@ class TwoDimEncoding(object):
         merged_array = []
         merged_cube = copy.deepcopy(mlb[idx_now])
         while idx_now < (mlb.shape[0] - 1):
+            print(idx_now)
             for id in range(idx_now+1, mlb.shape[0]):
                 row = mlb[id]
                 if id == (mlb.shape[0] - 1):
