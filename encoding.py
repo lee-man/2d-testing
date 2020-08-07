@@ -71,7 +71,7 @@ class TwoDimEncoding(object):
     The class for Two-Dimention Low-Power Encoding.
 
     '''
-    def __init__(self, mlb_path, group_ctrl=19, chain_ctrl=18, mux_ctrl=3, upper_bound=0.5, sim_constraint=0.5, map_mode='stochastic', seed=0):
+    def __init__(self, mlb_path, group_ctrl=19, chain_ctrl=18, mux_ctrl=3, upper_bound=0.5, sim_constraint=0.5, map_mode='stochastic', seed=0, num_compare):
         self.mlb = np.load(mlb_path)
         self.num_cube = self.mlb.shape[0]
         self.num_id = self.mlb.shape[1]
@@ -82,6 +82,7 @@ class TwoDimEncoding(object):
         self.sim_constraint = sim_constraint
         self.mode = map_mode
         self.seed = seed
+        self.num_compare = num_compare
         self.sc_counts = None
         self.group_mapping = {}
         self.merged_array = None
@@ -235,6 +236,7 @@ class TwoDimEncoding(object):
         return activated_num / cube.shape[0], cube
 
 
+
     def merging(self):
         print('*' * 15)
         print('Start Merging.')
@@ -247,14 +249,12 @@ class TwoDimEncoding(object):
             for id in range(idx_now+1, mlb.shape[0]):
                 row = mlb[id]
                 if id == (mlb.shape[0] - 1):
-                    if mask[id] == 1:
-                        merged_array.append(merged_cube)
-                    else:
+                    if mask[id] != 1:
                         activated_percentage, merged_cube_candidate = self.calculate_activated_percentage(merged_cube, row)
                         if activated_percentage <= self.upper_bound:
                             merged_cube = merged_cube_candidate
                             mask[id] = 1
-                        merged_array.append(merged_cube)
+                    merged_array.append(merged_cube)
                     while mask[idx_now] == 1 and idx_now < (mlb.shape[0] - 1):
                         idx_now += 1
                     mask[idx_now] = 1
@@ -264,8 +264,23 @@ class TwoDimEncoding(object):
                 elif self.check_conflict(merged_cube, row):
                     activated_percentage, merged_cube_candidate = self.calculate_activated_percentage(merged_cube, row)
                     if activated_percentage <= self.upper_bound:
-                        merged_cube = merged_cube_candidate
-                        mask[id] = 1
+                        # merged_cube = merged_cube_candidate
+                        # mask[id] = 1
+
+                        # heuristic merge: look forward 10 steps
+                        count = 0
+                        z = id + 1
+                        id_compare = id
+                        while (count <= self.num_compare) and (z < mlb.shape[0]):
+                            activated_percentage_z, merged_cube_candidate_z = self.calculate_activated_percentage(merged_cube, mlb[z])
+                            if (activated_percentage_z <= self.upper_bound) and (activated_percentage_z <= activated_percentage):
+                                id_compare = z
+                                merged_cube_candidate = merged_cube_candidate_z
+                                count += 1
+                            z += 1
+                        mask[id_compare] = 1
+                        merged_cube = merged_cube_candidate     
+
 
                     
         self.merged_array = np.array(merged_array)
@@ -361,7 +376,7 @@ def main(args):
     # initilize and evaluate
     # create_mlb()
     encoder = TwoDimEncoding('data/mlb.npy', map_mode=args.map_mode, upper_bound=args.upper_bound, 
-                                sim_constraint=args.sim_constraint, seed=args.seed, mux_ctrl=args.mux_ctrl)
+                                sim_constraint=args.sim_constraint, seed=args.seed, mux_ctrl=args.mux_ctrl, num_compare=args.num_compare)
     encoder.merging()
     encoder.encoding()
     encoder.eval()
