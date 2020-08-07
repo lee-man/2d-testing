@@ -244,15 +244,16 @@ class TwoDimEncoding(object):
         merged_array = []
         merged_cube = copy.deepcopy(mlb[idx_now])
         while idx_now < (mlb.shape[0] - 1):
-            for (id, row) in enumerate(mlb):
+            for id in range(idx_now+1, mlb.shape(0))
+                row = mlb[id]
                 if id == (mlb.shape[0] - 1):
                     if mask[id] == 1:
                         merged_array.append(merged_cube)
                     else:
-                        activated_percentage, merged_cube_candidate = self.calculate_activated_percentage(merged_cube, mlb[id])
+                        activated_percentage, merged_cube_candidate = self.calculate_activated_percentage(merged_cube, row)
                         if activated_percentage <= self.upper_bound:
                             merged_cube = merged_cube_candidate
-                        mask[id] = 1
+                            mask[id] = 1
                         merged_array.append(merged_cube)
                     while mask[idx_now] == 1 and idx_now < (mlb.shape[0] - 1):
                         idx_now += 1
@@ -261,7 +262,7 @@ class TwoDimEncoding(object):
                 elif mask[id] == 1:
                     continue
                 elif self.check_conflict(merged_cube, row):
-                    activated_percentage, merged_cube_candidate = self.calculate_activated_percentage(merged_cube, mlb[id])
+                    activated_percentage, merged_cube_candidate = self.calculate_activated_percentage(merged_cube, row)
                     if activated_percentage <= self.upper_bound:
                         merged_cube = merged_cube_candidate
                         mask[id] = 1
@@ -315,10 +316,9 @@ class TwoDimEncoding(object):
 
         specified_percentage = specified_num.sum() / (self.num_merged_cube * self.num_id)
         activated_percentage = activated_num.sum() / (self.num_merged_cube * self.num_id)
-        # succeeded =  encoded_success / self.num_merged_cube
+
         print('Specified scan chain percentage after merging is {:.2f}%.'.format(100.*specified_percentage))
         print('Activaed scan chain percentages is {:.2f}%.'.format(100.*activated_percentage))
-        # print('Encoding success   rate is {:.2f}%.'.format(100.*succeeded))
 
 
 def get_args():
