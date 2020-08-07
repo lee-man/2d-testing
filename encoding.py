@@ -71,7 +71,7 @@ class TwoDimEncoding(object):
     The class for Two-Dimention Low-Power Encoding.
 
     '''
-    def __init__(self, mlb_path, group_ctrl=19, chain_ctrl=18, mux_ctrl=3, upper_bound=0.5, sim_constraint=0.5, map_mode='stochastic', seed=0, num_compare):
+    def __init__(self, mlb_path, group_ctrl=19, chain_ctrl=18, mux_ctrl=3, upper_bound=0.5, sim_constraint=0.5, map_mode='stochastic', seed=0, num_compare=10):
         self.mlb = np.load(mlb_path)
         self.num_cube = self.mlb.shape[0]
         self.num_id = self.mlb.shape[1]
