@@ -243,6 +243,7 @@ class TwoDimEncoding(object):
         mlb = copy.deepcopy(self.mlb)
         mask = np.zeros(mlb.shape[0])
         idx_now = 0
+        mask[0] = 1
         merged_array = []
         merged_cube = copy.deepcopy(mlb[idx_now])
         while idx_now < (mlb.shape[0] - 1):
