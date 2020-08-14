@@ -118,7 +118,7 @@ class TwoDimEncoding(object):
 
     def create_mlb_with_cell(self, mean=10, density=500, std=None):
         # cell = np.zeros(self.num_id, density)
-        logging.info('Started to create mlb with cell attribution.')
+        logging.info('Started to create mlb with cell attribute.')
         self.mlb_w_cell = np.random.choice([0, 1], (self.num_cube, self.num_id, density), [1-mean/density, mean/density]).astype(float)
         self.mlb_w_cell *= np.expand_dims(self.mlb, axis=2)
 
@@ -243,6 +243,7 @@ class TwoDimEncoding(object):
     def calculate_activated_percentage(self, merged_cube, to_merged_cube):
         cube = self.merge_two_cube(merged_cube, to_merged_cube)
         if len(cube.shape) == 2:
+            print('2')
             cube_wo_cell = (cube.sum(axis=1) > 0).astype(float)
         else:
             cube_wo_cell = cube
@@ -316,7 +317,9 @@ class TwoDimEncoding(object):
                                 mask[id] = 1     
 
         if self.conflict == 'cell':
-            self.merged_array = (np.array(merged_array).sum(axis=2) > 0).astype(float)
+            merged_array = np.array(merged_array)
+            print(merged_array.shape)
+            self.merged_array = (np.array(merged_array).sum(axis=1) > 0).astype(float)
         else:
             self.merged_array = np.array(merged_array)
 
