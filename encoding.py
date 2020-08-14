@@ -100,7 +100,7 @@ class TwoDimEncoding(object):
         
     
     def _print_info(self):
-        logging.info('*' * 5, 'Statistic', '*' * 5)
+        logging.info('*****Statistic：')
         logging.info('The size of testing dataset is {}'.format(self.num_cube))
         logging.info('The size of each test cube is {}'.format(self.num_id))
         logging.info('Control bits settings:{} chain ctrl, {} group ctrl and {} mux crtl'.format(self.chain_ctrl, self.group_ctrl, self.mux_ctrl))
