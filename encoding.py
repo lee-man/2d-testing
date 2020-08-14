@@ -119,8 +119,8 @@ class TwoDimEncoding(object):
     def create_mlb_with_cell(self, mean=10, density=500, std=None):
         # cell = np.zeros(self.num_id, density)
         logging.info('Started to create mlb with cell attribute.')
-        self.mlb_w_cell = np.random.choice([0, 1], (self.num_cube, self.num_id, density), [1-mean/density, mean/density]).astype(float)
-        self.mlb_w_cell *= np.expand_dims(self.mlb, axis=2)
+        mlb_w_cell = np.random.choice([0, 1], (self.num_cube, self.num_id, density), [1-mean/density, mean/density]).astype(float)
+        self.mlb *= np.expand_dims(self.mlb, axis=2)
 
 
 
@@ -318,8 +318,7 @@ class TwoDimEncoding(object):
 
         if self.conflict == 'cell':
             merged_array = np.array(merged_array)
-            print(merged_array.shape)
-            self.merged_array = (np.array(merged_array).sum(axis=1) > 0).astype(float)
+            self.merged_array = (np.array(merged_array).sum(axis=2) > 0).astype(float)
         else:
             self.merged_array = np.array(merged_array)
 
