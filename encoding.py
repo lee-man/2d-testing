@@ -120,7 +120,7 @@ class TwoDimEncoding(object):
         # cell = np.zeros(self.num_id, density)
         logging.info('Started to create mlb with cell attribute.')
         mlb_w_cell = np.random.choice([0, 1], (self.num_cube, self.num_id, density), [1-mean/density, mean/density]).astype(float)
-        self.mlb *= np.expand_dims(self.mlb, axis=2)
+        self.mlb = mlb_w_cell * np.expand_dims(self.mlb, axis=2)
 
 
 
