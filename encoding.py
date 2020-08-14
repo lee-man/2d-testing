@@ -74,8 +74,8 @@ class TwoDimEncoding(object):
 
     '''
     def __init__(self, mlb_path, group_ctrl=19, chain_ctrl=18, mux_ctrl=3, upper_bound=0.5, sim_constraint=0.5, map_mode='stochastic', seed=0, num_compare=10, conflict='sc'):
-        # self.mlb = np.load(mlb_path)[:10000]
-        self.mlb = np.load(mlb_path)
+        self.mlb = np.load(mlb_path)[:10000]
+        # self.mlb = np.load(mlb_path)
         self.num_cube = self.mlb.shape[0]
         self.num_id = self.mlb.shape[1]
         self.group_ctrl = group_ctrl
@@ -86,6 +86,7 @@ class TwoDimEncoding(object):
         self.mode = map_mode
         self.seed = seed
         self.num_compare = num_compare
+        self.conflict = conflict
         self.sc_counts = None
         self.group_mapping = {}
         self.merged_array = None
@@ -97,6 +98,8 @@ class TwoDimEncoding(object):
         # self._set_seed()
         self.scan_chain_hist()
         self.generate_group_mapping()
+        if conflict == 'cell':
+            self.create_mlb_with_cell()
         
     
     def _print_info(self):
@@ -113,7 +116,10 @@ class TwoDimEncoding(object):
         random.seed(self.seed)
 
     def create_mlb_with_cell(self, mean=10, density=500, std=None):
-        pass
+        # cell = np.zeros(self.num_id, density)
+        self.mlb_w_cell = np.random.choice([0, 1], (self.num_cube, self.num_id, density), [1-mean/density, mean/density])
+        self.mlb_w_cell *= np.expand_dims(self.mlb, axis=3)
+
 
 
     def scan_chain_hist(self, draw=False):
@@ -197,6 +203,7 @@ class TwoDimEncoding(object):
         '''
         return (cube1 * cube2).sum() == 0
     
+
     # def determin_group_bit(self, cube, mux_id):
     #     '''
     #     Determine the group control bits for a specific row
@@ -220,21 +227,27 @@ class TwoDimEncoding(object):
         '''
         Merge two testing cube.
         '''
-        cube = np.zeros(cube1.shape[0])
-        for i in range(cube1.shape[0]):
-            if cube1[i] == 1 or cube2[i] == 1:
-                cube[i] = 1
+        cube = np.zeros(cube1.shape)
+        cube = ((cube1 + cube2) > 0).astype(float)
+        # for i in range(cube1.shape[0]):
+        #     if cube1[i] == 1 or cube2[i] == 1:
+        #         cube[i] = 1
         return cube
+    
     
     def calculate_specified_percentage(self, cube):
         return cube.sum()/cube.shape[0]
 
     def calculate_activated_percentage(self, merged_cube, to_merged_cube):
         cube = self.merge_two_cube(merged_cube, to_merged_cube)
+        if len(cube.shape) == 2:
+            cube_wo_cell = (cube.sum(axis=1) > 0).astype(float)
+        else:
+            cube_wo_cell = cube
         group_bit = np.zeros((self.mux_ctrl, self.group_ctrl))
         chain_bit = np.zeros((self.mux_ctrl, self.chain_ctrl))
         for mux_bit in range(self.mux_ctrl):
-                for (ele_id, ele) in enumerate(cube):
+                for (ele_id, ele) in enumerate(cube_wo_cell):
                     if ele == 1.0:
                         group_bit[mux_bit, self.group_mapping[mux_bit][str(ele_id)] // self.chain_ctrl] = 1
                         chain_bit[mux_bit, self.group_mapping[mux_bit][str(ele_id)] % self.chain_ctrl] = 1
@@ -300,9 +313,10 @@ class TwoDimEncoding(object):
                                 merged_cube = merged_cube_candidate
                                 mask[id] = 1     
 
-
-                    
-        self.merged_array = np.array(merged_array)
+        if self.conflict == 'cell':
+            self.merged_array = (np.array(merged_array).sum(axis=2) > 0).astype(float)
+        elif:
+            self.merged_array = np.array(merged_array)
 
     def encoding(self):
         logging.info('*' * 15)
@@ -346,7 +360,7 @@ class TwoDimEncoding(object):
 
         if not os.path.isdir('figs/'):
                 os.makedirs(os.path.dirname('figs/'))
-        plt.savefig('figs/hist_{}_{}_{}_{}.png'.format(self.mode, self.upper_bound, self.sim_constraint, self.mux_ctrl))
+        plt.savefig('figs/hist_{}_{}_{}_{}_{}.png'.format(self.mode, self.conflict, self.upper_bound, self.sim_constraint, self.mux_ctrl))
 
         specified_percentage = specified_num.sum() / (self.num_merged_cube * self.num_id)
         activated_percentage = activated_num.sum() / (self.num_merged_cube * self.num_id)
