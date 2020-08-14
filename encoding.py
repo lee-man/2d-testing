@@ -243,7 +243,6 @@ class TwoDimEncoding(object):
     def calculate_activated_percentage(self, merged_cube, to_merged_cube):
         cube = self.merge_two_cube(merged_cube, to_merged_cube)
         if len(cube.shape) == 2:
-            print('2')
             cube_wo_cell = (cube.sum(axis=1) > 0).astype(float)
         else:
             cube_wo_cell = cube
