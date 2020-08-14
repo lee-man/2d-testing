@@ -6,6 +6,8 @@ from sklearn.preprocessing import MultiLabelBinarizer
 import numpy as np
 import copy
 import argparse
+import logging
+logging.basicConfig(level=logging.INFO)
 
 from sklearn import metrics
 import matplotlib.pyplot as plt
@@ -19,8 +21,8 @@ def create_mlb():
     # 1. get the unique id list 
     num_sc = 0
     num_exp = 0
-    print('#' * 15)
-    print('Get the unique id list')
+    logging.info('#' * 15)
+    logging.info('Get the unique id list')
     id_list = []
     with open('data/LOG.csv', encoding='utf-8') as f:
         f_csv = csv.reader(f)
@@ -37,14 +39,14 @@ def create_mlb():
     num_id = len(id_list)
     # print('Id List:')
     # print(id_list)
-    print('The length of id list is {}'.format(num_id))
-    print('The size of testing data is {}'.format(num_exp))
+    logging.info('The length of id list is {}'.format(num_id))
+    logging.info('The size of testing data is {}'.format(num_exp))
 
     ###########################
     # 2. Multi-Label Binarizer
     num_id = 339
     # Create the Multi-Label Matrix
-    print('Create Multi-Label Binarizer')
+    logging.info('Create Multi-Label Binarizer')
     mlb = np.zeros((num_exp, num_id))
 
     with open('data/LOG.csv', encoding='utf-8') as f:
@@ -58,7 +60,7 @@ def create_mlb():
                     idx = int(element) - 1
                     mlb[id, idx] = 1
                     num_sc += 1
-    print('The # and percentage of activated scan chains are {:.2f} and {:.2f}%.'.format(num_sc / num_exp, \
+    logging.info('The # and percentage of activated scan chains are {:.2f} and {:.2f}%.'.format(num_sc / num_exp, \
             100. * num_sc / (num_exp * num_id)))
 
     np.save('data/mlb.npy', mlb)
@@ -71,7 +73,7 @@ class TwoDimEncoding(object):
     The class for Two-Dimention Low-Power Encoding.
 
     '''
-    def __init__(self, mlb_path, group_ctrl=19, chain_ctrl=18, mux_ctrl=3, upper_bound=0.5, sim_constraint=0.5, map_mode='stochastic', seed=0, num_compare=10):
+    def __init__(self, mlb_path, group_ctrl=19, chain_ctrl=18, mux_ctrl=3, upper_bound=0.5, sim_constraint=0.5, map_mode='stochastic', seed=0, num_compare=10, conflict='sc'):
         self.mlb = np.load(mlb_path)[:10000]
         self.num_cube = self.mlb.shape[0]
         self.num_id = self.mlb.shape[1]
@@ -97,17 +99,20 @@ class TwoDimEncoding(object):
         
     
     def _print_info(self):
-        print('*' * 5, 'Statistic', '*' * 5)
-        print('The size of testing dataset is {}'.format(self.num_cube))
-        print('The size of each test cube is {}'.format(self.num_id))
-        print('Control bits settings:{} chain ctrl, {} group ctrl and {} mux crtl'.format(self.chain_ctrl, self.group_ctrl, self.mux_ctrl))
-        print('The upper bound of activated scan chian for low power encoding is {}.'.format(self.upper_bound))
-        print('The grouping method is {}.'.format(self.mode))
+        logging.info('*' * 5, 'Statistic', '*' * 5)
+        logging.info('The size of testing dataset is {}'.format(self.num_cube))
+        logging.info('The size of each test cube is {}'.format(self.num_id))
+        logging.info('Control bits settings:{} chain ctrl, {} group ctrl and {} mux crtl'.format(self.chain_ctrl, self.group_ctrl, self.mux_ctrl))
+        logging.info('The upper bound of activated scan chian for low power encoding is {}.'.format(self.upper_bound))
+        logging.info('The grouping method is {}.'.format(self.mode))
 
     def _set_seed(self):
         # Set Seed
         np.random.seed(self.seed)
         random.seed(self.seed)
+
+    def create_mlb_with_cell(self, mean=10, density=500, std=None):
+
 
     def scan_chain_hist(self, draw=False):
 
@@ -239,8 +244,8 @@ class TwoDimEncoding(object):
 
 
     def merging(self):
-        print('*' * 15)
-        print('Start Merging.')
+        logging.info('*' * 15)
+        logging.info('Start Merging.')
         mlb = copy.deepcopy(self.mlb)
         mask = np.zeros(mlb.shape[0])
         idx_now = 0
@@ -261,6 +266,7 @@ class TwoDimEncoding(object):
                         idx_now += 1
                     mask[idx_now] = 1
                     merged_cube = copy.deepcopy(mlb[idx_now])
+                    # break
                 elif mask[id] == 1:
                     continue
                 elif self.check_conflict(merged_cube, row):
@@ -297,8 +303,8 @@ class TwoDimEncoding(object):
         self.merged_array = np.array(merged_array)
 
     def encoding(self):
-        print('*' * 15)
-        print('Start Encoding.')
+        logging.info('*' * 15)
+        logging.info('Start Encoding.')
         self.num_merged_cube = self.merged_array.shape[0]
         self.encoded_group = np.zeros((self.num_merged_cube, self.group_ctrl))
         self.encoded_chain = np.zeros((self.num_merged_cube, self.chain_ctrl))
@@ -316,12 +322,12 @@ class TwoDimEncoding(object):
             self.encoded_chain[id] = chain_bit[int(self.encoded_mux[id])]
 
     def eval(self):
-        print('*' * 15)
-        print('Evalutation.')
+        logging.info('*' * 15)
+        logging.info('Evalutation.')
         specified_num = np.zeros(self.num_merged_cube)
         activated_num = np.zeros(self.num_merged_cube)
         self.num_merged_cube = self.merged_array.shape[0]
-        print('Total number of merged test cube is {}'.format(self.num_merged_cube))
+        logging.info('Total number of merged test cube is {}'.format(self.num_merged_cube))
         for id in range(self.num_merged_cube):
             specified_num[id] = self.merged_array[id].sum()
             activated_num[id] = self.encoded_group[id].sum() \
@@ -343,8 +349,8 @@ class TwoDimEncoding(object):
         specified_percentage = specified_num.sum() / (self.num_merged_cube * self.num_id)
         activated_percentage = activated_num.sum() / (self.num_merged_cube * self.num_id)
 
-        print('Specified scan chain percentage after merging is {:.2f}%.'.format(100.*specified_percentage))
-        print('Activaed scan chain percentages is {:.2f}%.'.format(100.*activated_percentage))
+        logging.info('Specified scan chain percentage after merging is {:.2f}%.'.format(100.*specified_percentage))
+        logging.info('Activaed scan chain percentages is {:.2f}%.'.format(100.*activated_percentage))
 
 
 def get_args():
@@ -355,7 +361,7 @@ def get_args():
                                     description='Arguments for 2D encoding structure')
     
     args.add_argument('--map_mode',
-                        default='stochastic', type=str,
+                        default='stochastic', type=str, choices=['stochastic', 'random']
                         help='The grouping/mapping mode')
 
 
@@ -377,6 +383,11 @@ def get_args():
     args.add_argument('--num_compare',
                         default=0, type=int,
                         help='The number of test cubes to check')
+    
+    args.add_argument('--conflict_model',
+                        default='sc', type=str, choices=['sc', 'cell'],
+                        help='The conflict model to use')
+
     return args.parse_args()
 
 
@@ -387,7 +398,8 @@ def main(args):
     # initilize and evaluate
     # create_mlb()
     encoder = TwoDimEncoding('data/mlb.npy', map_mode=args.map_mode, upper_bound=args.upper_bound, 
-                                sim_constraint=args.sim_constraint, seed=args.seed, mux_ctrl=args.mux_ctrl, num_compare=args.num_compare)
+                                sim_constraint=args.sim_constraint, seed=args.seed, mux_ctrl=args.mux_ctrl, num_compare=args.num_compare
+                                conflict=args.conflict_model)
     encoder.merging()
     encoder.encoding()
     encoder.eval()
