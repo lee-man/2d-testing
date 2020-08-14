@@ -74,7 +74,8 @@ class TwoDimEncoding(object):
 
     '''
     def __init__(self, mlb_path, group_ctrl=19, chain_ctrl=18, mux_ctrl=3, upper_bound=0.5, sim_constraint=0.5, map_mode='stochastic', seed=0, num_compare=10, conflict='sc'):
-        self.mlb = np.load(mlb_path)[:10000]
+        # self.mlb = np.load(mlb_path)[:10000]
+        self.mlb = np.load(mlb_path)
         self.num_cube = self.mlb.shape[0]
         self.num_id = self.mlb.shape[1]
         self.group_ctrl = group_ctrl
@@ -344,7 +345,7 @@ class TwoDimEncoding(object):
 
         if not os.path.isdir('figs/'):
                 os.makedirs(os.path.dirname('figs/'))
-        plt.savefig('figs/hist_{}_{}_{}_{}_sub.png'.format(self.mode, self.upper_bound, self.sim_constraint, self.mux_ctrl))
+        plt.savefig('figs/hist_{}_{}_{}_{}.png'.format(self.mode, self.upper_bound, self.sim_constraint, self.mux_ctrl))
 
         specified_percentage = specified_num.sum() / (self.num_merged_cube * self.num_id)
         activated_percentage = activated_num.sum() / (self.num_merged_cube * self.num_id)
