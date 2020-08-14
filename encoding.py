@@ -363,7 +363,7 @@ def get_args():
                                     description='Arguments for 2D encoding structure')
     
     args.add_argument('--map_mode',
-                        default='stochastic', type=str, choices=['stochastic', 'random']
+                        default='stochastic', type=str, choices=['stochastic', 'random'],
                         help='The grouping/mapping mode')
 
 
