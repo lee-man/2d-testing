@@ -400,7 +400,7 @@ def main(args):
     # initilize and evaluate
     # create_mlb()
     encoder = TwoDimEncoding('data/mlb.npy', map_mode=args.map_mode, upper_bound=args.upper_bound, 
-                                sim_constraint=args.sim_constraint, seed=args.seed, mux_ctrl=args.mux_ctrl, num_compare=args.num_compare
+                                sim_constraint=args.sim_constraint, seed=args.seed, mux_ctrl=args.mux_ctrl, num_compare=args.num_compare,
                                 conflict=args.conflict_model)
     encoder.merging()
     encoder.encoding()
