@@ -113,6 +113,7 @@ class TwoDimEncoding(object):
         random.seed(self.seed)
 
     def create_mlb_with_cell(self, mean=10, density=500, std=None):
+        pass
 
 
     def scan_chain_hist(self, draw=False):
