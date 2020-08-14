@@ -74,8 +74,8 @@ class TwoDimEncoding(object):
 
     '''
     def __init__(self, mlb_path, group_ctrl=19, chain_ctrl=18, mux_ctrl=3, upper_bound=0.5, sim_constraint=0.5, map_mode='stochastic', seed=0, num_compare=10, conflict='sc'):
-        self.mlb = np.load(mlb_path)[:10000]
-        # self.mlb = np.load(mlb_path)
+        # self.mlb = np.load(mlb_path)[:10000]
+        self.mlb = np.load(mlb_path)
         self.num_cube = self.mlb.shape[0]
         self.num_id = self.mlb.shape[1]
         self.group_ctrl = group_ctrl
@@ -98,7 +98,7 @@ class TwoDimEncoding(object):
         # self._set_seed()
         self.scan_chain_hist()
         self.generate_group_mapping()
-        if conflict == 'cell':
+        if self.conflict == 'cell':
             self.create_mlb_with_cell()
         
     
@@ -257,6 +257,7 @@ class TwoDimEncoding(object):
         activated_num = group_bit[encoded_mux].sum() \
                             * chain_bit[encoded_mux].sum()
         return activated_num / cube.shape[0], cube
+
 
 
 
