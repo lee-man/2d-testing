@@ -315,7 +315,7 @@ class TwoDimEncoding(object):
 
         if self.conflict == 'cell':
             self.merged_array = (np.array(merged_array).sum(axis=2) > 0).astype(float)
-        elif:
+        else:
             self.merged_array = np.array(merged_array)
 
     def encoding(self):
