@@ -102,6 +102,7 @@ class TwoDimEncoding(object):
         print('The size of each test cube is {}'.format(self.num_id))
         print('Control bits settings:{} chain ctrl, {} group ctrl and {} mux crtl'.format(self.chain_ctrl, self.group_ctrl, self.mux_ctrl))
         print('The upper bound of activated scan chian for low power encoding is {}.'.format(self.upper_bound))
+        print('The grouping method is {}.'.format(self.mode))
 
     def _set_seed(self):
         # Set Seed
@@ -274,14 +275,17 @@ class TwoDimEncoding(object):
                                 count = 0
                                 z = id + 1
                                 id_compare = id
-                                while (count <= self.num_compare) and (z < mlb.shape[0]):
-                                    if self.check_conflict(merged_cube, mlb[z]):
+                                while (count < self.num_compare) and (z < mlb.shape[0]):
+                                    if mask[z] == 1:
+                                        z += 1
+                                        continue
+                                    elif self.check_conflict(merged_cube, mlb[z]):
                                         activated_percentage_z, merged_cube_candidate_z = self.calculate_activated_percentage(merged_cube, mlb[z])
                                         if (activated_percentage_z <= self.upper_bound) and (activated_percentage_z <= activated_percentage):
                                             id_compare = z
                                             merged_cube_candidate = merged_cube_candidate_z
                                             count += 1
-                                        z += 1
+                                    z += 1
                                 mask[id_compare] = 1
                                 merged_cube = merged_cube_candidate
                             else:
