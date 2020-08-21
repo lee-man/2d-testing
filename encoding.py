@@ -393,7 +393,7 @@ class EDTEncoder(object):
 
         if draw:
             plt.figure()
-            plt.bar(range(self.num_id), self.prob_success)
+            plt.bar(range(self.num_id)[37:50], self.prob_success[37:50])
             plt.xlabel('Scan Chian ID')
             plt.ylabel('Encoding Success Rate')
             if not os.path.isdir('figs/'):
