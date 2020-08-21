@@ -385,6 +385,14 @@ class EDTEncoder(object):
         self.assign_prob(draw=False)
     
 
+    def _print_info(self):
+        logging.info('*****Statistic：')
+        logging.info('The size of testing dataset is {}'.format(self.num_cube))
+        logging.info('The size of each test cube is {}'.format(self.num_id))
+        logging.info('Control bits settings:{} control bits'.format(self.edt_ctrl))
+        logging.info('The upper bound of activated scan chian for low power encoding is {}.'.format(self.upper_bound))
+
+
     def assign_prob(self, draw=True):
         '''
         Assign the probability of encoding successfully to cases with different specified scan chain
