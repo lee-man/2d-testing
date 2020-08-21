@@ -67,7 +67,7 @@ def create_mlb():
 
 
 ##########################
-# 3. Merging and Encoding using 2D structure
+# 3. Merging and Encoding using 2D structure or EDT structure
 class TwoDimEncoding(object):
     '''
     The class for Two-Dimention Low-Power Encoding.
@@ -121,7 +121,6 @@ class TwoDimEncoding(object):
         logging.info('Started to create mlb with cell attribute.')
         mlb_w_cell = np.random.choice([0, 1], (self.num_cube, self.num_id, density), [1-mean/density, mean/density]).astype(float)
         self.mlb = mlb_w_cell * np.expand_dims(self.mlb, axis=2)
-
 
 
     def scan_chain_hist(self, draw=False):
@@ -373,13 +372,49 @@ class TwoDimEncoding(object):
         logging.info('Activaed scan chain percentages is {:.2f}%.'.format(100.*activated_percentage))
 
 
+class EDTEncoder(object):
+    '''
+    The class for EDT encoder, under some prior probabilistic model
+    '''
+    def __init__(self, mlb_path, edt_ctrl=37, upper_bound=0.5):
+        self.mlb = np.load(mlb_path)
+        self.num_cube = self.mlb.shape[0]
+        self.num_id = self.mlb.shape[1]
+        self.edt_ctrl = edt_ctrl
+        self.upper_bound = upper_bound
+        self.assign_prob()
+
+
+    
+    def assign_prob(self, draw=True):
+        self.prob_success = np.zeros(self.num_id)
+        self.prob_success[:self.edt_ctrl] = 1
+        self.prob_success[self.edt_ctrl:] = np.power(0.5, range(num_id - self.edt_ctrl))
+
+        if draw:
+            plt.figure()
+            plt.bar(range(self.num_id), self.prob_success)
+            plt.xlabel('Scan Chian ID')
+            plt.ylabel('Encoding Success Rate')
+            if not os.path.isdir('figs/'):
+                os.makedirs(os.path.dirname('figs/'))
+            plt.savefig('figs/encoding_prob.png')
+
+
+        
+
+
 def get_args():
     '''
-    Arguments for 2D encoding structure.
+    Arguments for 2D encoding structure or EDT structure.
     '''
     args = argparse.ArgumentParser(add_help=False,
                                     description='Arguments for 2D encoding structure')
     
+    args.add_argument('--encoder_model',
+                        default='2D', type=str, choices=['2D', 'EDT'],
+                        help='The encoder model: 2D strcuture or EDT structure')
+
     args.add_argument('--map_mode',
                         default='stochastic', type=str, choices=['stochastic', 'random'],
                         help='The grouping/mapping mode')
@@ -417,12 +452,16 @@ def main(args):
     args = get_args()
     # initilize and evaluate
     # create_mlb()
-    encoder = TwoDimEncoding('data/mlb.npy', map_mode=args.map_mode, upper_bound=args.upper_bound, 
-                                sim_constraint=args.sim_constraint, seed=args.seed, mux_ctrl=args.mux_ctrl, num_compare=args.num_compare,
-                                conflict=args.conflict_model)
-    encoder.merging()
-    encoder.encoding()
-    encoder.eval()
+    if args.encoder_model == '2D':
+        encoder = TwoDimEncoding('data/mlb.npy', map_mode=args.map_mode, upper_bound=args.upper_bound, 
+                                    sim_constraint=args.sim_constraint, seed=args.seed, mux_ctrl=args.mux_ctrl, num_compare=args.num_compare,
+                                    conflict=args.conflict_model)
+        encoder.merging()
+        encoder.encoding()
+        encoder.eval()
+    else:
+        encoder = EDTEncoder('data/mlb.npy')
+    
 
 
 if __name__ == '__main__':
