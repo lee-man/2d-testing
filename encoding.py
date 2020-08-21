@@ -273,7 +273,7 @@ class TwoDimEncoding(object):
             for id in range(idx_now+1, mlb.shape[0]):
                 row = mlb[id]
                 if id == (mlb.shape[0] - 1):
-                    if mask[id] != 1:
+                    if mask[id] != 1 and self.check_conflict(merged_cube, row):
                         activated_percentage, merged_cube_candidate = self.calculate_activated_percentage(merged_cube, row)
                         if activated_percentage <= self.upper_bound:
                             merged_cube = merged_cube_candidate
@@ -382,11 +382,13 @@ class EDTEncoder(object):
         self.num_id = self.mlb.shape[1]
         self.edt_ctrl = edt_ctrl
         self.upper_bound = upper_bound
-        self.assign_prob()
-
-
+        self.assign_prob(draw=False)
     
+
     def assign_prob(self, draw=True):
+        '''
+        Assign the probability of encoding successfully to cases with different specified scan chain
+        '''
         self.prob_success = np.zeros(self.num_id)
         self.prob_success[:self.edt_ctrl] = 1
         self.prob_success[self.edt_ctrl:] = np.power(0.5, range(self.num_id - self.edt_ctrl))
@@ -400,8 +402,104 @@ class EDTEncoder(object):
                 os.makedirs(os.path.dirname('figs/'))
             plt.savefig('figs/encoding_prob.png')
 
+    def check_conflict_encoding(self, cube1, cube2):
+        '''
+        Check whether two cubes have a confliction and wheather can be encoded successfully using self.prob_success
+        '''
+        num_specified_sc = ((cube1 + cube2) > 0).astype(float).sum()
+        success_encoded = np.random.choice(2, size=1, p=[1-self.prob_success[num_specified_sc], self.prob_success[num_specified_sc]])
+        return ((cube1 * cube2).sum() == 0) and success_encoded
+    
+    def merge_two_cube(self, cube1, cube2):
+        '''
+        Merge two testing cube.
+        '''
+        cube = np.zeros(cube1.shape)
+        cube = ((cube1 + cube2) > 0).astype(float)
+        # for i in range(cube1.shape[0]):
+        #     if cube1[i] == 1 or cube2[i] == 1:
+        #         cube[i] = 1
+        return cube
+    
+    def estimate_activated_percentage_merge(self, merged_cube, to_merged_cube):
+        cube = self.merge_two_cube(merged_cube, to_merged_cube)
+        activated_num = cube.sum()
+        activated_num += np.random.choice(2, size=(self.num_id-activated_num))
+        return activated_num, cube
+    
+    def estimate_activated_percentage(self, cube):
+        activated_num = cube.sum()
+        activated_num += np.random.choice(2, size=(self.num_id-activated_num))
+        return activated_num
 
+    def merging(self):
+        logging.info('*' * 15)
+        logging.info('Start Merging.')
+        mlb = copy.deepcopy(self.mlb)
+        mask = np.zeros(mlb.shape[0])
+        idx_now = 0
+        mask[0] = 1
+        mergerd_array = []
+        activated_num_array = []
+        merged_cube = copy.deepcopy(mlb[idx_now])
+        activated_percentage = self.estimate_activated_percentage(merged_cube)
+        while idx_now < (mlb.shape[0] - 1):
+            for id in range(idx_now+1, mlb.shape[0]):
+                row = mlb[id]
+                if id == (mlb.shape[0] - 1):
+                    if mask[id]!= 1 and self.check_conflict_encoding(merged_cube, row):
+                        activated_percentage_candidate, merged_cube_candidate = self.estimate_activated_percentage((merged_cube, row)
+                        if activated_percentage <= self.upper_bound:
+                            merged_cube = merged_cube_candidate
+                            activated_percentage = activated_percentage_candidate
+                            mask[id] = 1
+                    mergerd_array.append(merged_cube)
+                    activated_num_array.append(activated_percentage)
+                    while mask[idx_now] == 1 and idx_now < (mlb.shape[0] - 1):
+                        idx_now += 1
+                    mask[idx_now] = 1
+                    merged_cube = copy.deepcopy(mlb[idx_now])
+                    activated_percentage = self.estimate_activated_percentage(merged_cube)
+            elif mask[id] == 1:
+                    continue
+            elif self.check_conflict_encoding(merged_cube, row):
+                    activated_percentage_candidate, merged_cube_candidate = self.calculate_activated_percentage(merged_cube, row)
+                    if activated_percentage <= self.upper_bound:
+                        merged_cube = merged_cube_candidate
+                        activated_percentage = activated_percentage_candidate
+                        mask[id] = 1
+
+        self.merged_array = np.array(merged_array)
+        self.activated_num_array = np.array(activated_num_array)
+
+    def eval(self):
+        logging.info('*' * 15)
+        logging.info('Evalutation.')
+        self.num_merged_cube = self.merged_array.shape[0]
+        specified_num = np.zeros(self.num_merged_cube)
+        activated_num = self.activated_num_array
+        logging.info('Total number of merged test cube is {}'.format(self.num_merged_cube))
+        for id in range(self.num_merged_cube):
+            specified_num[id] = self.merged_array[id].sum()
+          
+        ranges = (np.min(specified_num), np.max(activated_num))
         
+        plt.figure()
+        sns.distplot(specified_num, hist_kws={'range': ranges}, kde=False, bins=50, norm_hist=True, label='Specified')
+        sns.distplot(activated_num, hist_kws={'range': ranges}, kde=False, bins=50, norm_hist=True, label='Activated')
+        plt.xlabel(' # Scan Chain')
+        plt.ylabel('Density')
+        plt.legend()
+
+        if not os.path.isdir('figs/'):
+                os.makedirs(os.path.dirname('figs/'))
+        plt.savefig('figs/hist_edt_{}_{}.png'.format(self.upper_bound, self.edt_ctrl))
+
+        specified_percentage = specified_num.sum() / (self.num_merged_cube * self.num_id)
+        activated_percentage = activated_num.sum() / (self.num_merged_cube * self.num_id)
+
+        logging.info('Specified scan chain percentage after merging is {:.2f}%.'.format(100.*specified_percentage))
+        logging.info('Activaed scan chain percentages is {:.2f}%.'.format(100.*activated_percentage))
 
 
 def get_args():
@@ -461,6 +559,8 @@ def main(args):
         encoder.eval()
     else:
         encoder = EDTEncoder('data/mlb.npy')
+        encoder.merging()
+        encoder.eval()
     
 
 
