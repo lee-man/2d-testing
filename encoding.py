@@ -406,7 +406,7 @@ class EDTEncoder(object):
         '''
         Check whether two cubes have a confliction and wheather can be encoded successfully using self.prob_success
         '''
-        num_specified_sc = ((cube1 + cube2) > 0).astype(float).sum()
+        num_specified_sc = int(((cube1 + cube2) > 0).astype(float).sum())
         success_encoded = np.random.choice(2, size=1, p=[1-self.prob_success[num_specified_sc], self.prob_success[num_specified_sc]])
         return ((cube1 * cube2).sum() == 0) and success_encoded
     
