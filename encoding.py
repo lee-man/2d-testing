@@ -424,12 +424,12 @@ class EDTEncoder(object):
     def estimate_activated_percentage_merge(self, merged_cube, to_merged_cube):
         cube = self.merge_two_cube(merged_cube, to_merged_cube)
         activated_num = cube.sum()
-        activated_num += np.random.choice(2, size=(self.num_id.astype(float)-activated_num)).sum()
+        activated_num += np.random.choice(2, size=(float(self.num_id)-activated_num)).sum()
         return activated_num, cube
     
     def estimate_activated_percentage(self, cube):
         activated_num = cube.sum()
-        activated_num += np.random.choice(2, size=(self.num_id.asastype(float)-activated_num)).sum()
+        activated_num += np.random.choice(2, size=(float(self.num_id)-activated_num)).sum()
         return activated_num
 
     def merging(self):
