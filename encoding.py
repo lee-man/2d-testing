@@ -448,7 +448,7 @@ class EDTEncoder(object):
                 row = mlb[id]
                 if id == (mlb.shape[0] - 1):
                     if mask[id]!= 1 and self.check_conflict_encoding(merged_cube, row):
-                        activated_percentage_candidate, merged_cube_candidate = self.estimate_activated_percentage(merged_cube, row)
+                        activated_percentage_candidate, merged_cube_candidate = self.estimate_activated_percentage_merge(merged_cube, row)
                         if activated_percentage <= self.upper_bound:
                             merged_cube = merged_cube_candidate
                             activated_percentage = activated_percentage_candidate
@@ -460,14 +460,14 @@ class EDTEncoder(object):
                     mask[idx_now] = 1
                     merged_cube = copy.deepcopy(mlb[idx_now])
                     activated_percentage = self.estimate_activated_percentage(merged_cube)
-            elif mask[id] == 1:
-                    continue
-            elif self.check_conflict_encoding(merged_cube, row):
-                    activated_percentage_candidate, merged_cube_candidate = self.calculate_activated_percentage(merged_cube, row)
-                    if activated_percentage <= self.upper_bound:
-                        merged_cube = merged_cube_candidate
-                        activated_percentage = activated_percentage_candidate
-                        mask[id] = 1
+                elif mask[id] == 1:
+                        continue
+                elif self.check_conflict_encoding(merged_cube, row):
+                        activated_percentage_candidate, merged_cube_candidate = self.estimate_activated_percentage_merge(merged_cube, row)
+                        if activated_percentage <= self.upper_bound:
+                            merged_cube = merged_cube_candidate
+                            activated_percentage = activated_percentage_candidate
+                            mask[id] = 1
 
         self.merged_array = np.array(merged_array)
         self.activated_num_array = np.array(activated_num_array)
