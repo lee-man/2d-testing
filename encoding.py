@@ -389,7 +389,7 @@ class EDTEncoder(object):
     def assign_prob(self, draw=True):
         self.prob_success = np.zeros(self.num_id)
         self.prob_success[:self.edt_ctrl] = 1
-        self.prob_success[self.edt_ctrl:] = np.power(0.5, range(num_id - self.edt_ctrl))
+        self.prob_success[self.edt_ctrl:] = np.power(0.5, range(self.num_id - self.edt_ctrl))
 
         if draw:
             plt.figure()
