@@ -448,7 +448,7 @@ class EDTEncoder(object):
                 row = mlb[id]
                 if id == (mlb.shape[0] - 1):
                     if mask[id]!= 1 and self.check_conflict_encoding(merged_cube, row):
-                        activated_percentage_candidate, merged_cube_candidate = self.estimate_activated_percentage((merged_cube, row)
+                        activated_percentage_candidate, merged_cube_candidate = self.estimate_activated_percentage(merged_cube, row)
                         if activated_percentage <= self.upper_bound:
                             merged_cube = merged_cube_candidate
                             activated_percentage = activated_percentage_candidate
