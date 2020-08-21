@@ -383,6 +383,7 @@ class EDTEncoder(object):
         self.edt_ctrl = edt_ctrl
         self.upper_bound = upper_bound
         self.assign_prob(draw=False)
+        self._print_info()
     
 
     def _print_info(self):
